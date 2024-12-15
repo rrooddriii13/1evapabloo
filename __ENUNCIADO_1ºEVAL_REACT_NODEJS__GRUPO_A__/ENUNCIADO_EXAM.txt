@@ -1,0 +1,100 @@
+-------------------------------------------------------------------------------------------------------------------------
+  ex.Programacion web Cliente: react + nodejs + express + mongodb
+  	
+	duracion: 3h 30min
+
+	=============================================================================================================
+	== OJO!!! debe compilar sin errores para corregirse, además si se detecta código de IA o código copy/paste ==
+	== 	directamente no se corrige, incluso se podrá pedir la explicación detallada de forma individual    ==
+	==	del código que se ha presentado									   ==
+	=============================================================================================================
+	
+
+	----------------------------------------------
+	hay un usuario de pruebas para el LOGIN:
+ 				email:	  pablo.mr.developer.69@gmail.com
+				password: Hola1234!
+		
+---------------------------------------------------------------------------------------------------------------------------
+
+
+DEL LADO DEL CLIENTE REACT:
+=========================================================================
+1º ( 8 ptos) - DATOS CUENTA panel cliente ===>  DIRECCIONES ENVIO
+=========================================================================
+
+	- MOSTRAR DIRECCIONES DE ENVIO DEL CLIENTE:  ................................. 1 pto
+	------------------------------------------------------------------------------------
+	nada mas cargar el componente MostrarDirec.js deberá mostrar las direcciones de envió
+	 del cliente (si las hubiera, sino mostraria el warning que no hay ninguna dirección aun dada de alta para el envió). 
+	SOLO PUEDE HABER UNA UNICA DIRECCION PRINCIPAL, y esta se resaltara sobre las demás (a libre elección)
+
+
+llamada servicio restCliente a servicio nodejs para actualizar direcciones cliente ..... 1 pto+
+----------------------------------------------------------------------------------------------
+las DIRECCIONES DEL CLIENTE se mandaran al servicio de nodejs para q actualice dichas direcciones en mongodb cuando el componente MostrarDirec.js
+se elimine del DOM (por una redireccion, pq el usuario ha cliqueado en el logo de eBay pq se va a la tienda, o pq se va a otra zona de su panel, etc)
+ ===> !!! NO CADA VEZ QUE SE HAGA UNA OPERACION SE CONECTA CON EL SERVICIO PARA HACERLA !!! <===
+
+código actualización direcciones en store global de zustand ............................ 1 pto
+----------------------------------------------------------------------------------------------
+hacer en el store de zustand una función especifica para añadir/modificar/eliminar una dirección de la propiedad direcciones del objeto cliente del
+state
+
+
+	- ALTA NUEVA DIRECCION: ....................................................... 2 ptos
+	--------------------------------------------------------------------------------------
+	cuando se pulsa el botón "Añadir dirección" en el componente MostrarDirec.js se despliega un formulario
+	modal para crear una nueva dirección en el cliente. DEBE CARGAR nada mas mostrarse las PROVINCIAS (recuperadas del servicio geoApi de nodejs)
+	cuando se seleccione una provincia debe cargarse los MUNICIPIOS DE ESA PROVINCIA (recuperadas del servicio geoApi de nodejs)
+
+		Para CREAR la dirección deben estar todos los campos rellenados, solo se HABILITARA EL BOTON de CREAR cuando esto se cumpla
+	=== OJO!!! ====================================================================================================================
+	Cuando se genere la nueva dirección se almacenara en el objeto cliente del state-global NO SE MANDA AL SERVICIO AUN!!!!
+	===============================================================================================================================
+
+
+
+	- MODIFCAR DIRECCION EXISTENTE: ................................................. 2 ptos
+	----------------------------------------------------------------------------------------
+	 cuando se pulsa el botón "Modificar" en el componente MiniDireccion.js se debe desplegar el formulario
+	modal que hay en componente MostrarDirec que se usaba para crear una nueva dirección, pero debe cargar los datos de la dirección a
+	modificar dentro del mismo (cargar provincias y seleccionar la provincia de la dirección, y cargar municipios y seleccionar el municipio
+	de la dirección)
+	
+		Para MODFICAR la dirección deben estar todos los campos rellenados, solo se HABILITARA EL BOTON de CREAR cuando esto se cumpla
+	=== OJO!!! ====================================================================================================================
+	Cuando se modifique la dirección se almacenara en el objeto cliente del state-global NO SE MANDA AL SERVICIO AUN!!!!
+	===============================================================================================================================
+
+
+
+	- ELIMINAR DIRECCION EXISTENTE: .................................................. 1 pto
+	----------------------------------------------------------------------------------------
+	 cuando se pulsa el botón "Eliminar" en el componente MiniDireccion.js se debe eliminar dicha dirección
+	del cliente
+	
+	=== OJO!!! ====================================================================================================================
+	Cuando se elimine la dirección se eliminara del objeto cliente del state-global NO SE MANDA AL SERVICIO AUN!!!!
+	===============================================================================================================================
+
+
+
+
+
+
+DEL LADO DEL SERVICIO en NODEJS:
+=========================================================================
+2º ( 2  ptos) - RECOGER DIRECCIONES cliente y almacenarlas en MONGODB
+=========================================================================
+se debe crear un endpoint en el servicio de nodejs para recoger las direcciones del cliente y actualizarlas en mongodb; deberá comprobar que se envia el accesstoken del usuario cuando hizo el login
+y este es valido (olvidaros del refresh). Si no es valido, se mandara op.no permitida y deberá loguearse de nuevo.
+
+si todo ok, debe actualizar los datos de direcciones dentro de la colección "clientes" para ese cliente en mongodb (prop.direcciones solo)
+
+
+
+
+
+
+
