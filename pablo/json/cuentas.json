@@ -1,0 +1,3 @@
+{"_id":{"$oid":"670ed9876420b82b329c53e5"},"nombre":"pepe","apellidos":"gutierrez","email":"pablo.mr.developer.69i@gmail.com","password":"$2b$10$WxHoReqcL7oYgHw2LzcJIekwGtJxeyJn.ogKPs2i854mB79G0I84W","telefono":"688112233","activada":true}
+{"_id":{"$oid":"671cc95bebfd5f1c9bc0c8cc"},"nombre":"TELEFONIA PCS 2000, SL","apellidos":"","email":"telefonia123@outlook.es","password":"$2b$10$WxHoReqcL7oYgHw2LzcJIekwGtJxeyJn.ogKPs2i854mB79G0I84W","telefono":"600651336","activada":true}
+{"_id":{"$oid":"671ccbe3ebfd5f1c9bc0c8dd"},"nombre":"Cash Converters España S.L","apellidos":"","email":"ayudaebay@cash-converters.es","password":"$2b$10$WxHoReqcL7oYgHw2LzcJIekwGtJxeyJn.ogKPs2i854mB79G0I84W","telefono":"","activada":true}

@@ -1,0 +1,173 @@
+
+ --------------------------------------------
+ HOOKS PERSONALIZADOS: useEffect, useMemo
+ --------------------------------------------
+ useEffect: es un hook muy utilizado y usado junto con useState, se utiliza para:
+	
+	https://react.dev/reference/react/useEffect	
+
+	- la carga de datos desde un servicio externo (a diferencia del loader de react-router-dom, el efecto de esta carga
+	de datos no se hace exclusivamente cuando se carga el componente, de hecho, antes de existir los loader la carga
+	inicial se hacia con un efecto
+
+	- actualizar/modificar el DOM ante eventos del usuario, q modifican el satate del componente y puedes hacer q
+	se dispare un efecto q intercepte esa modificación y ejecutar una accion
+
+ la sintaxis del hook (es una función js q admite 2 parámetros obligatorios):
+			-1º argumento: función sin argumentos, síncrona y pura (si en su interior modificas el state debes partir
+					del valor anterior del state anterior ,no establecerlo) partir del state anterior y modificar el valor nuevo y restablecer
+					NO TIENE PORQUE DEVOLVER NADA, si devuekve algo DEBE SER UNA FUNCION, q se ejecuta antes del 
+					renderizado nuevo del efecto o cuando se descarga el componente
+	
+			-2º argumento: un array de valores representa el conjunto de valores de los que depende la ejecución de la 
+					función del efecto, cuando cambia un solo valor de este array, la función se ejecuta
+	
+					OJO!!! SI ESTA VACIO el EFECTO se ejecuta una única vez q es cuando carga el componente
+	useEffect()
+		()=>{
+			...comando(s)
+			... 
+			return ()=>{ <---------------- función de retorno OPCIONAL
+					comando(s)
+		},
+		[ dependencia1, deoendencia2, ....] ->  ejecuta la funcion cuando alguna de estos valores(dependencia 1dependencia2) cambia
+							se ejecuta la funxcion y el componente se refresca y al refrescarse ejecuta 1 la funcion 
+							de reutn se refresca y luego la de arriba
+	)
+
+
+-------------------------------------------------------
+  Chat .>
+  
+  useEffect-> es un hook que te permite realizar acciones después de que tu componente se ha renderizado en la pantalla. 
+              Es muy útil para tareas como cargar datos, suscribirse a eventos, o realizar efectos que necesitan ejecutarse en respuesta 
+               a cambios en el componente.
+  se usa para :
+	-Para cargar datos desde un servidor cuando el componente se monta.
+	Para actualizar el DOM en respuesta a eventos del usuario.
+	Para realizar limpiezas cuando el componente se desmonta o antes de que se ejecute un nuevo efecto.
+ 
+   sintaxis:
+   useEffect(() => {
+  	// Aquí va el código que quieres ejecutar.
+  	return () => {
+    	// Esta función se ejecuta antes de que el componente se desmonte.
+  	};
+	}, [/* Aquí van las dependencias */]);
+
+    
+ ----------------------------------------------------------------------------------------------------------------
+ 	ej: carga de categorñias en componente Heder del layout (sin hacer uso del loader react-router-dom)
+	
+		import {useEffect, useState } form 'react'
+
+		function Header(){
+			const [ categorias, setCategorias ]=useState([])
+
+			useEffect()
+				()={
+					//función a ejecutar por el efecto nada mas cargar el componente para recup.categorias
+					restTienda.DevolverCategorias()
+						.then( cats => setCategorias (cats) )
+						.catch( err => console.log('error al recuperar categorias',err))
+				},
+				[]
+			)
+
+		}
+
+-----------------------	
+
+	necesito haxcer un patron para sacar categorias y subcategoras -> xconsola de mongo
+ 	categorias _> db["categorias"].find({pathCategoria: { $regex: /^[0-9]+$/ }})
+	subcategoriasdel 1-> db["categorias"].find({pathCategoria: { $regex: /^1-[0-9]+$/ }})
+
+
+	ej: carga de subcategoria hijas (1ºnivel) cuando hagp mouseOver sobre una categoria principal
+	variable del state para cuando tenga el raton sobre una opcion del menu osea del nav me almacene la categoria alamacenada
+
+		const [categoriaSelec, seCategoriasSelec ]=useState(null);
+		....
+		
+		useEffect(
+			()=>{
+				//funcionq se ejecuta para recuperar las subcategorias a 1º nivel de una categ.principal
+			},
+			[ categoriaSelect ]
+		)
+		
+		return (
+			...
+			<li className='nav-item' onMouseOver={ ()=> setCategoriaSelec(cat._id)} >
+				<Link to=`/Tienda/Productos/${cat.pathCategoria}`> {cat.nombreCategoria} </Link>
+			</li>
+		)
+
+ --------------------------------------
+
+ layout: loader			Header: useEffect
+	  |---------------------|
+		     |
+	      restTienda.DeolverCategorias( { request, params } )
+
+
+
+  el DevolverCategorias lo usan layout y el header lo diferenecias uno de otro x el params si el params no esta definido (pathCategoria lo ejecuta el 
+  loader quieres cargar categorias principail
+
+ ===============================================================================
+ useMemo: hook q sirve para almacenar en cache valores de la ejecucion de una funcion que sabes que no van a cambiar con el tiempo
+ al ser un hook, es una funcion js q admite 2 parámetros:
+ https://react.dev/reference/react/useMemo
+
+
+ vide pablo18 ->29/10/2024
+
+ useMemo-> guardar en cache valores q has pedido y no volver a pedirlo y no volver a usar componentes
+ !!!OJO USEMEMO DEVUELVE EL VALOR A CACHEAR!!!
+	- 1º parámetro: funcion q devuelve el valor que quieres almacenar en cache
+	- 2º parámetro: array de dependencias, cada vez q cambia alguno de estos valores, la funcionq calcula el valor cacheado vuelve
+			a ejecutarse y refresca dicho valor
+
+	const valorAAlmacenar = useMemo(
+					()=>{
+						...comando
+						return valor; <----- valor a almacenar en variable q se va a cachear
+					},
+					[dependencia1, dependencia2,...]
+				)
+----------------- ¿¿como almacenariamos en cache todal las subcategorias de 1º nivel de las categorias principales  ??------
+
+
+   voy 1:41:20
+		  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+c

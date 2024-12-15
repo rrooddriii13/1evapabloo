@@ -1,0 +1,324 @@
+ 
+ ---------------------------------------------------
+	arquitectura aplicación
+ ----------------------------------------------------
+
+       |-------------------------------------------------en nuestra maquina ----------------------------------------------------|
+
+	FRONT		  servicios_react	BACK				SERVIDOR BD
+	clientes 		||					 	mongodb-> almacenamiento datos perrsistente ej.> productos,usuarios
+	navegadores ------------------------>   servidor			(local o en la nube)
+	SPA-React <------------------------	NODEJS   
+	 miEbay 				(servicios REST) --------------->almacenamiento/recup. datos JSON
+								<------------------
+
+										 SERVIDOR BD 
+								redis Para datos temporales de alta velocidad-> abajo
+								almacenamiento/recup datos inmediatos(ram) como datos de sesión usuario
+
+ Front : usuario interectuar-> maneja la interfaz con la que los usuarios interactúan.
+ Servicios de React: Punto de enlace entre frontend y backend.Hace la comunicacion entre la app react con la app (back y front)
+ Back: lo q corre por detras es decir aquello q va a recibir los datos x parte de los clientes
+
+ ====================================
+ 1. ¿Qué es AJAX?
+ AJAX (Asynchronous JavaScript and XML) es una técnica que permite a las aplicaciones web enviar y recibir datos del servidor
+ sin tener que recargar toda la página. Esto se traduce en una experiencia de usuario más fluida y rápida. Aunque el término 
+ menciona XML, hoy en día se usa más comúnmente JSON para intercambiar datos.
+---------------------------------------------------------------------------------------------------------------------
+ como mandar datos desde js al backend (servidor)
+      AJAX
+		http-request GET,POST	servidor backend nodejs
+ cliente ----------------------------> servicio REST (devuelve datos en formato JSON en http-response)
+	 <--------------------------- servicio REST -> es un programita q esta ejecutando en lado de back q como respuesta siempre datos tipo JSON
+		http-response
+
+ la cabecera http-request, ContentType establece el tipo de datos 
+ que va en el body http-request (como se mandan los datos):
+
+ si no pones nada y mandas datos desde un form cliente a un servidor backen ese dato se manda x defecto SIEMPRE
+
+ applications/x-www-form-urlencoded (por defecto el q usan los form) ===>datos en  formato variable/clave=valor, variable=valor,...
+ application/json ====================> los datos se mandan en formato json: {prop:valor, prop,valor, ...}
+ multipart/formdata ==================> x-www-form-urlencoded donde varios puedes mandar (contenido binario) fichero (como imágenes,pdfs...)
+ ...
+ ----------------------------------------------------------------------
+ Forma q tengo para enviar datos desde el cliente a mi servidor es usando AJAX
+ FORMAS de mandar datos usando AJAX:
+ 
+ en  el submit del form del registro cuando ya tengo validados los datos de mi variable de state los tengo q mandar al servidor de NODE
+
+ 1º forma usando el objeto XMLHttpRequest(XHR) ->forma mas primitiva
+	- a) nos creamos un objeto XMLHttpRequest:
+			
+			let _petAjax=new XMLHttpRequest();
+	
+	- b) usando el método .open() del objto, abrimos conexión (socket) hacia el servidor usando la url y método http que definas:
+				
+		_petAjax.open('GET' | 'POST', 'http://localhost:3000/api/zonaCliente/Registro') 1arg post o get y 2 url donde vas a quere mandar datos al servidor
+	
+		usando el método .send(...) mando los datos al servidor; en el argumento del método .send, van los datos:
+			
+			Antes de enviar la solicitud hay q crear la cabecera.setRequestHeader('cabecera', valor)
+			que en cabecera para indicar el tipo de contenido - es con 'Content-Type' , aqui el tipo  ' application/json'
+
+			GET ---> en el body del http-request no van los datos, van en la url, entonces: _petAjax.send(null)
+			POST --> en el body del http-request si van los datos en funcion de la cabecera que pongas en el content-type
+				 usando método .setRequestHeader('cabecera', valor)
+			
+
+                 	ej: mando texto plano...
+			 _petAjax.setRequestHeader('Content-Type','text/plain');
+			 _petAjax.send('hola como estas)
+
+			ej: mando en json... -> 1 establecer cabeceras 
+			 _petAjax.setRequestHeader('Content-Type','application/json');
+			 _petAjax.send ( {nombre:'...', apellidos:'...', edad:35} )
+			                 ----------------------------------------
+					  en navegadores antiguis en vez de coigerte el obj te lo sustituye ala clase q pertenecve el obj [Object object]
+			                 \--> [Object object]
+					 si da este problema, serializar el json (convertirlo en un STRING)
+					 JSON.stringify( {...} )	
+			                 y en el servidor, deserializas:
+  			                 JSON.parse(...)
+
+          el cod JS es single fred solo hay un hilo  es decir ejecuta instruccion,ejecuta instruccion,ejecuta instruccion
+	  dsi tu haces llamada a un servidor llama al servidor y espera eso es una putada xq se (queda pillado) para 
+	  para  evitar el single fred la ejecucion mono hilo se invento funciones y eventos callbackluego promeesas
+
+ 
+	- c) se recomienda hacerlo antes del .send() el definir la función callback de llamada cuando se completa la pet.ajax al servidor
+	     ¿Cómo sabe el single-thread de js q la pet.ajax ha finalizado? el objeto XMLHttpRequest tiene un evento, llamado "readystatechange"
+		la propiedad .readyState controla los valores de este evento
+		
+	La propiedad readyState dice el estado en que se encuentra una solicitud AJAX en un momento dado
+
+		0	UNSENT	Client has been created. open() not called yet. la aplicacion ajax se abierto el socket pero no envio ningun tipo de datos 
+		1	OPENED	open() has been called. ->  se acaba de abrir (open() ha sido llamado)
+		2	HEADERS_RECEIVED send() has been called, and headers and status are available.-> las cabeceraas estas establecidas
+		3	LOADING	Downloading; responseText holds partial data. -> se mando datos al servidor y el servidor lo esta procesando
+		4	DONE	The operation is complete. <================= el servidor ha completado el procesamiento de los datos
+									       y te ha mandado respuesta
+
+	entonces, en la fun manejadora del evento  tengo q comporobar si la propiedad readyState vale 4 o no  
+        creamos un handler para el evento readystatechange  buscando la propiedad readyState sea 4
+			
+			//readystatechange xq añado sobre el obj _petAjax  el evento q quiero escuchar , la funcion landa q quiero escuchar
+			_petAjax.addEventListener('readystatechange',(ev) => {
+					if (_petAjax.readyState == 4) { //si es 4  q ya tengo respuesta
+						//ya tengo respuesta del server, la leo...
+					}
+			} )
+
+		para leer respuesta del server usamos propiedades .responseText y .responseXML del objeto XMLHttpResquest:
+
+			.responseXML ----> recibes la respuesta del server formato XML (servicios SOAP viejunos)
+			.responseText ---> recibes respuesta del server en formato JSON, texto, ... 
+
+			_petAjax.addEventListener('readystatechange',(ev) => {
+					if (_petAjax.readyState == 4) {
+						//ya tengo respuesta del server, la leo...
+						let _respuestaServer=JSON.parse(_petAjax..responseText );
+							...
+					}
+			} )
+
+
+
+
+	propiedades utiles 
+
+   status: Devuelve el código de estado HTTP de la respuesta (por ejemplo, 200 para éxito, 404 para "no encontrado").
+   statusText: Devuelve un mensaje de texto asociado con el código de estado, como "OK" o "Not Found".
+   responseText: Devuelve la respuesta en formato de texto (útil para JSON).
+   responseXML: Devuelve la respuesta en formato XML si el servidor respondió en este formato.
+  getResponseHeader(headerName): Devuelve el valor de un encabezado específico de la respuesta.
+  getAllResponseHeaders(): Devuelve todas las cabeceras de la respuesta en formato de texto.
+
+
+
+ resumen  ->  los PASOS A SEGUIR :
+ creo obj ,abroo conexion estableciendo metodo URL 
+ antes de mandar los datos establezco cabecera con el formato de los datos,
+ antes de mandar los datos un manejador de evento readystatechange  , y func landa
+ bbusco condicion para q readyState sea 4  para q reciba respuesta DEL SERVER dentro del if leo la respuesta del server
+ una vez defina el handler mando los datos con el formato que puesto lo ultimo es el SEND
+
+ ---------------
+ TE VAS A servicios Y CREAS restService.js
+ 
+ 2º forma usando la FETCH-api
+
+ 3º forma usando paquetes externos, como AXIOS
+
+
+
+
+
+ ---25
+ --------------------------------- 
+ BACKEND : nodeJS
+ ---------------------------------
+ para iniciar un proyecto de nnode, te situas en elldirectorio donde vas a codificar el proyecto: 
+   cd /ruta/proyectoNode.js
+   npm init -y -> no te pregunta el nombre...  te lo genera con valores por defecto
+   npm init <------------------------ simplemente te genera un fichero package.json(para ver ayuda mas extensa)
+				   ejecutae : npm help init 
+			           OJOO!!! con el nombre del punto o modulo de entrada ,pq es el modulo principal
+				   de nuestro proyecto de nodejs(por defecto,tepone un index.js) pero es server.js 
+ entonces crear un fichero server.js
+
+ node funciona con MODULOS de codigo JS (cada modulo de codigo es un fichero con extension .js)
+ cada modulo es una funcion inmediata de JS q realmente no ves,pero se genera:
+
+ (para verla ejecutar en consola :
+	node -e "const Module=require('node:module'); console.log(Module.wrapper);" 
+	-el conj de valores q exporta estos modulos lo metes en la variable Module  y automaticamente
+	 la puedes usar
+ ) 
+
+ para ejecutar un modulo de codigo:  node /ruta/nombre_modulo.js -> node server.js
+
+	server.js
+ +--------------------+
+ (
+  function (exports, require, module, __filename, __dirname){
+   //codigo js de tu modulo .. de forma interna puedes usar:
+		- exports -> puntero al obj module.exports -> en este obj se almacena todas las variables q se pueden exportar hacia fuera(obj donde se definen valores a exportar del modulo (funciones variables ))
+		- require -> es una funcion q importa valores(OBJ) de otros modulos q importan
+		 -> se udas asi -> const  variable=require('ruta_modulo' | 'nombre_modulo_nodejs')
+		- module -> es un obj de la clase global Module de NodeJS (con sus propiedades (wrapper,export...)  y sus metodos -> : Un objeto que representa el módulo actual
+		-__filename -> String, con ruta completa y nombre del modulo 
+		-__dirname  -> String con ruta del modulo (donde es6sa=)
+
+  https://nodejs.org/docs/latest/api/globals.html
+ 
+   } 
+ )(global) -> global es el conj de obj globales de nodejs  y el va a coger exports,require ,module,__filename,__dirname q ahora puedes usar en funcion interana
+  ------
+     \-----> de los objetos globales de nodejs ,se le pasan aa ala funcion inmediata del modulo los valores
+	     exports,require ,module,__filename,__dirname
+ los de global  nop hace impoortarlos con un reuqired estos metodos lo tienen todos losmodulos 
+ 
+ funcion inmediata-> se usan cuando dentro quieres usar variables con mismo nombre,delas variables de fueras globales las quieres hacer internas en cada modulo es independientes todo lo  q definas no se ve desde fuera es interno (privado)
+ Es  una funcion q la defenicion la metes entre ()  y si t quieres ejecutar la funcion  tienes qpasarle los parametros a la funcion  en los parentesis
+ la llamas sin ningun nombre y van siempre entre ()
+ 
+ es en el momento q la defines se ejecuta sin necesidad de invocarla
+ ej ::>
+ (
+    function (a,b){
+        console.log('LOS PARAMETROS  son ...',a,b)
+    }
+ )(12,'hola que tal')
+
+ LOS PARAMETROS  son ... 12 hola que tal
+
+ ----------------------------------------
+  como montar un servidor web en nodejs sin usar paquete HTTP interno: EXPRESS
+ express -> te monta servidor web de la forma mas facil de node.js
+ ----------------------------------------------------------------
+ --instalamos expres en el directorio de node (back)
+ 	cd /ruta/proyecto_nodejs
+	npm install express --save
+
+ --verlp
+ https://expressjs.com/es/guide/routing.html
+
+ Cada endpoint es una URL específica a la que se pueden enviar solicitudes para obtener o manipular datos. Aquí hay una explicación más detallada:
+ Direccionamiento : endpoint->rutas en las cuales el server esta a la escucha de los clientes
+ cuando un cliente solicita en la url una ruta el servidor chequea si la tiene deficinida si esta definida
+ ejecuta la funcion q tenga para esa ruta la pusimos en cliente react_petAjax.open('POST','http://localhost:3000/api/zonaCliente/Registro');
+ esa ruta tiene q estar uan ruta en el server.js para q el servidor diga ostia un cliente me esta solicitando algo 
+ q yo tengo configurado , si la ruta no existe sale el 404 por eso me salia
+
+ 
+
+https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/G<lobal_Objects/Function
+
+
+-funciionamiento de express:
+
+son como modulos de codifo q esta peticion llega al cliente (http-request) la procesa (FUNCION MIDDLEware1)
+ ejecuta una serie de cod (es una fun js)(es un obj q lo mapea contra una clase de express con sus prop y metodos donde  mandas los datos 
+
+ expres estan formado x un conjunto de funcion middleware q cada funcion tiene parametros (res,req,next)
+ middleware es una función que recibe una solicitud HTTP y puede:
+ req: El objeto de solicitud (request), contiene datos enviados por el cliente, como parámetros, encabezados y cuerpo de la solicitud.
+ res: El objeto de respuesta (response), permite construir y enviar la respuesta al cliente.
+ next: Una función que permite pasar el control al siguiente middleware. pasar a otra funcion middleware
+
+ //middleware de enrutamiento : nombre _objeto_express.METODO_HTTP('url_endpoint',function(req,res,next){}) 2 fun miidle wq porcesa la peticion
+  metodo hhtp .-> post o get 
+
+
+	 http-request	 servidor express+node.js
+						      next			    next 
+cliente --------------> [function middleware 1]  ==========>[function middleware 2] ===> [function middleware 3] ==>....
+		       procesa peticiones (http-request)   procesa http-request
+		       usando el parametro: req            modificado por midle-1
+			(obj HttpRequest de express) 	   usando parametro: req 						     
+				  ||				   ||
+			puede mandar respuesta          puede mandar respuesta 
+			usando parametro:res            usando el parametro:res
+			(objeto HttpResponse de 
+				express)
+			    
+        <---------------------
+           http-response
+
+
+  imaginate q la middleware1 procesa peticion cliente y dice q todavia no quiere mandar respuestas quiere 
+ que otra funciopn middleware siga procesando ya no procesa `peticion original xq el 1 pudo haber hech modificaciones
+ se la pasa ala siguiente usando el next
+
+ next se usa para pasar el http-request de una funcion ala siguiente -> ej te llega peticion cliente(QUIERE comprar
+ producto) hay una determinada ruta donde recibe parametro req,res,next pero abntes de ejecutarlo quieres comprobar
+ si la cabecera de la peticion tiene un token de usuario -> entonces antes de la funcion middleware de compra 
+ hay otra antes q seria compribar token q lo q haria es coger el request(req) va ala cabecera y mira si hay token
+ si no hay token genera respuesta  de fforma inmediata (vete al login xq no hya token de inicio sesion no te permito 
+ comprar) y si hay token hace next y le pasa ala funcion de procesamiento de la compra del articulo
+
+https://expressjs.com/es/4x/api.html
+
+
+
+-----------------------------------
+
+//importarlo 1
+const express = require('express');
+console.log('LO q exporta el paquete express, y essta en la variable expreess es ... ',express.toString());
+
+//el resultado de la ejecucion de la funcion q exporta el modulo expreess te crea el objeto SERVER vacio
+//esta con valores por defecto, hay q configurarlo: puerto ala escucha,funciones midleware del servidor,lanzarlo
+const miServidorWeb = express();
+
+
+//cada ruta(endpoint) de los cuales el cliente quiere tener acceso a un servidor eso representa una fun middleware
+//configuramos las funciones middleware -> cada ruta si es x get,post,put ,delete es una fun midddleware
+//- cada endpoint o ruta de acceso de los clientes al servidor tiene q venir definida por una funcion middleware
+// siempre especificando metodo http por el q se accede ( get,post,put...) y la ruta;
+
+//middleware de enrutamientoi : nombre _objeto_express.METODO_HTTP('url_endpoint',function(req,res,next){}) 2 fun miidle wq porcesa la peticion
+//no hace falta poner hhtp:localdpost :3009 xq estoy enell servidsor
+miServidorWeb.post('/api/zonaCliente/Registro',function(req,res,next){
+    console.log('el cliente de react ha hecho esta solicitud http-request...',req)
+
+})
+
+//asi levanmtas el servidor pero antes hay q configuarlo arriba
+//1 puerto->para escuchargeneralmente por defecto el 3000 ,2  la funcion q se ejecute cuando los clientes se conectan cuando lanzas el servidor
+miServidorWeb.listen(3003,()=> {
+    console.log('...servidor web express escuchaando periciones en puerto 3003')
+});
+ 
+
+haces node server.js
+ ahora esta escuchando
+ ahora tenemos q hacer q un clinete envie peticion por post para  mandar datos -> (en el form de registro del componente registarCLiente en react) q cuando des all bton
+  
+ probar q esta ala escucga powersehell-> Invoke-RestMethod -Method post -Uri 'http://localhost:3000/api/zonaCliente/Registro' -Body 'HOLA MUNDO'
+
+
+				
+

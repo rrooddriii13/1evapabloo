@@ -1,0 +1,261 @@
+  
+  crear en loginComponente -> Login.js y Login.css
+  para q funcione el bootstrap hay q meterlo en el index o instalalrlo
+  se mete en la cabecera   
+  -------------------------------
+  <!-- cdn de bootstrap para añadir bootstrap y no instalarlo  -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"/>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+	aqui ver las clases de bootstrap //BOOTSPRAP .> https://getbootstrap.com/docs/5.3/forms/floating-labels/  aqui ver las clases
+
+
+  ---------------------------------
+
+  hacer el login como esta pag -> https://signin.ebay.es/ws/eBayISAPI.dll?SignIn&UsingSSL=1&siteid=186&co_partnerId=2&pageType=2556586&ru=https://www.ebay.es/&regUrl=https%3A%2F%2Fsignup.ebay.es%2Fpa%2Fcrte%3Fru%3Dhttps%253A%252F%252Fwww.ebay.es%252F&sgfl=reg
+  .> pag iconos -> https://fontawesome.com/kits
+  -> pepitodawa@gmail.com
+  .> contra : Rokas?chupNat
+	
+
+   pones en el index.js esto pa q se muestre cpmo pag prinmcipal
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(
+     <React.StrictMode>
+       <Login/>
+     </React.StrictMode>
+ ); 
+
+  
+  hay q imoportralo en el index para  q se peuda usar hay q poner en el head 
+  impoertar te vas a kits el q sale  y sale un >script > -> <script src="https://kit.fontawesome.com/18b1b864d5.js" crossorigin="anonymous"></script>
+    
+  te van a iconsos categoruas social y p inchas el q quieras y te da un cod ps es ese cod  
+
+  tamaño logos.> // tamaño icojo fa-grande l xl o ns      -> ej fa-xl fa-2xl 
+ // segun el elemtto ponerle un icono -> <i class="fa-brands fa-facebook"></i>
+   y en vez de q sean todos facebook  -> <i class="fa-brands fa-${elemento}"></i>
+ 
+
+
+   para crear botones de Continuar ... un bucle,pero en JSX no puedo poner for,for each ni nada, necesito funcion .map() de array
+   me creo un array  y le recorro con map y va ejecutar la  funcion de transformacion q ponga aqui que admite 
+    3 parametros 1-> elemtnto del array q se reccore 2->posicion 3-> y todo el array    */
+    lo q hace coge 1 elemento (Continuar y lo transformas en el div return )
+
+
+  tenfria esto 
+{
+            /* para crear botones de Continuar ... un bucle, pero en JSX no puedo pone for ni for each ni nada, necesito funcion .map() de array*/
+            /*me creo un array  y le recooro con map y va ejecutar la  funcion de transodrmacion q ponga aquique admite 3 parametros 1-> elemtnto del array q se reccore 2->posicion 3-> y todo el array    */
+            //lo q hace coge 1 elemento (Continuar y lo transformas en el div return )
+            ["Continuar","facebook","google","apple"].map(
+                (elemento,posicion,array)=>{
+                    //x cada elemento del array devuelve una nueva fila
+                    return <div className='row mt-4'  key= {posicion}>
+                        <div className='col-4'></div>
+                        <div className='col-2'>
+                            <button  type='button' 
+                            className={`btn w-100 ${elemento === 'Continuar' || elemento==='facebook' ? 'btn-primary' :'btn-light'}`}
+                            >
+                                {/*para meter iconos ps si el elemento es continuar q ponga continuar si np  */}
+                                <i className={`fa-brands fa-${elemento} fa-xl ms-2`}></i>{' '}
+                                {/* como sale Continuar con Continuar q no slaga eso poner condicion elem distintinto continua  muestra con el elemento q sea*/}
+                                Continuar {elemento !== 'Continuar' && `con ${elemento}`}</button>
+                                
+                        </div>
+                    </div>
+                }
+            )
+            }
+ 
+   tengo intercepar el onClick osea cuando seleccione uno ps  un unico manejador de eventos para toods 
+    para diferenciar cada boton lo hafgo con el atributo name q le pongo name=${eleemtno} es decir si esta reccoriendo continuar ps name= continuar asi con tosoa
+     y onClick={HandlerClickBoton}
+
+  etonces al bton le pongo una funcion manejadora de eventos  y creo la funcion arriba
+
+  //depede lo q valga xq si vale continuar el login de una forma pidiendo la contraseña 
+  //si es google hacrt llamando de google 
+  /si es facebook llamando al api de facebook
+  //si es apple llamando al api de apple
+
+ 
+
+ onChange lo q hace cuando estas en la  caja cada vez q pulsas una tecla se dispara el evento (ejecuta func) va cogiendo 
+ el valor q tiene en ese momento la caja texto y estable ce el valor state de la variale cada vez q se modica plasse modifica 
+
+  onChange={(ev)=> setEmailUser(ev.target.value)}
+
+ entonces el email ya lo tengo en la varibale del state ahora invokar al servicio (restService) siempre llamar =  el servicio /la variable igual  en todos los componentessi lo llamas dif el cod muy dificil de mantener es decir:
+  si en el componente registro llamas al servicio restService en el login igual
+  y en el rest servicre lo q hacemos es crear una func Comprobar email 
+
+
+  en restService creas esrta func dentro del obj 
+
+     al dar continuar (una vez metido el correo)
+
+
+    ComprobarEmail: function(email){
+        //en vez de creaun un obj XMLHttpRequest para hacer la peticion ajax callback y su puta madre ps con promesas
+        //fetch(1 url donde quieres mandar,un obj q le pasas method:POST , y body: los datos)
+        //como mandar datos get -> van en la url ,post->van en el body 
+        /*por post q los datos van en el body  -> fetch(1 url donde quieres mandar,un obj q le dices q es metodo post y el body llos daatos) decuelve una promes
+        //return fetch('http://localhost:3003/api/zonaCliente/ComprobarEmail',
+            { 
+                method:'POST', 
+                body: JSON.stringify( {email}) //mandas u  jon con la propiedad email q hay va el emial del cliente
+            });**/
+        
+        //get en la url tienen q ir los datos q quieres mandar formsto variable = valor ampersans -> 
+        // ?apartir de aqui empiexa la variable email-> nombre dela variale y =  ya qui el valor
+        return fetch('http://localhost:3003/api/zonaCliente/ComprobarEmail?email=' + email);
+        //mandar x get -> cuando  la info q q quieras mandar no es muy sensibkle(no tarjetas bancarias,ni contraseñas) y no son muchos valores -> para variables cortas es mas rapido
+        
+    }
+
+  vale ahora si el mail existe tengop q mostra lo de contraseña
+
+  lo q hago es crear do variables useState para almacenarlo y meterle una condicion 
+  const [emailValido, setEmailValido]=useState(false);//esto es para  segun como este mostrar o cultarlo lo de contrasela
+
+  la condicion es la respuesta del sserver q enviamos el cod 0 ps si el codigo es 0 
+  setEmailValido=true y q muestre lo de contrasela
+
+
+
+ ps en el return poner una condicion q si es distinto de false osea q si es true emailValido (  q muetre contraseña sino lo de identidica)
+
+
+  y lo q hago -> debako del logo 
+ 	
+
+
+  return(
+        <div className='container-fluid'>
+            <div className='row mt-4'>{/* aqui va la primera fila  q seria el logo */}
+                <a href="/Tienda/Productos"><img src='/images/logo_ebay.png' alt='loge Ebay'/> </a>
+            </div>
+        
+            {
+                /*si es != de true = q email es false*/
+                !emailValido? (
+                    //si email es falso  el codigo q tenia antes de idebntificabte en tu cuebta 
+                    <>
+                    <div className='row mt-4'>
+                        <div className='col-4'></div>
+                        <div className='col-2'><h3>Identificate en tu cuenta</h3></div>
+                    </div>
+                    <div className='row mt-4'>
+                        <div className='col-4'></div>
+                        <div className='col-2'>
+                            <span>¿Primera vez en eBay?</span>{' '}<a href='/Cliente/Registro'>Crear una cuenta</a>
+                        </div>
+                    </div>
+                    {/* AQUI LA CAJA DE TEXTO */}
+                    <div className='row mt-4'>
+                        <div className='col-4'></div>
+                        <div className='col-2'>
+                            <div className="form-floating mb-3">
+                                <input type="email"
+                                    className="form-control"
+                                    id="txtEmail"
+                                    placeholder="name@example.com"
+                                    onChange={(ev)=> setEmailUser(ev.target.value)}
+                                />
+                                <label htmlFor="txtEmail">Correo electronico o pseudonimo</label>
+                            </div>
+                        </div>
+                    </div>
+                    {
+                        /* para crear botones de Continuar ... un bucle, pero en JSX no puedo pone for ni for each ni nada, necesito funcion .map() de array
+                        me creo un array  y le recooro con map y va ejecutar la  funcion de transodrmacion q ponga aquique admite 3 parametros 1-> elemtnto del array q se reccore 2->posicion 3-> y todo el array    */
+                        ["Continuar","facebook","google","apple"].map(
+                            (elemento,posicion,array)=>{
+                                //x cada elemento del array devuelve una nueva fila
+                                return <div className='row mt-4'  key= {posicion}>
+                                    <div className='col-4'></div>
+                                    <div className='col-2'>
+                                        <button  
+                                        name={elemento}//esto es porq name va a valer Continuar ,facebook ,gggole,apppel,,,
+                                        type='button' 
+                                        //si el elemento es continuar o facebook esta clsae 'btn-primary' sino 'btn-light'
+                                        className={`btn w-100 ${elemento === 'Continuar' || elemento==='facebook' ? 'btn-primary' :'btn-light'}`}
+                                        onClick={HandlerClickBoton}
+                                        >
+                                            {/*para meter iconos ps si el elemento es continuar q ponga continuar si np  */}
+                                            <i className={`fa-brands fa-${elemento} fa-xl `}></i>{'   '}
+                                            {/* como sale Continuar con Continuar q no slaga eso poner condicion elem distintinto continua  muestra con el elemento q sea*/}
+                                            Continuar {elemento !== 'Continuar' && `con ${elemento}`}
+                                        </button>
+                                            
+                                    </div>
+                                </div>
+                            }
+                        )
+                    }
+                    </>
+                )
+                :
+                (
+                    //si email es true
+                    
+                    <>
+                        <div className='row mt-4'>
+                            <div className='col-4'></div>
+                            <div className='col-2'><h3>Hola de nuevo</h3></div>
+                        </div>
+                        <div className='row mt-4'>
+                            <div className='col-4'></div>
+                            <div className='col-2'>
+                                <span>{emailUser}</span>{' '}<a href='/'>Cambiar de cuenta</a>
+                            </div>
+                        </div>
+
+                        <div className='row mt-4'>
+                            <div className='col-4'></div>
+                            <div className='col-2'>
+                                <div className="form-floating mb-3">
+                                    <input type="password" 
+                                        className="form-control"
+                                        id="txtPassword"
+                                        onChange={ (ev)=> setPasswordUser(ev.target.value) }
+                                        />
+                                    <label htmlForfor="txtPassword">Cortraseña</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div className='row mt-4' >
+                            <div className='col-4'></div>
+                            <div className='col-2'>
+                                <button type='button' className='btn btn-light w-100'>Identifícate</button>
+                            </div>
+                        </div>
+                        <div className='row mt-4'>
+                            <div className='col-4'></div>
+                            <div className='col-2'>
+                                <a href='/'>Restablecer Contraseña</a>
+                            </div>
+                        </div>
+                    </>
+
+                )
+            
+            }
+
+
+        </div>
+
+    )
+
+  crear dos componentes en login opara si es false = Comprobar email
+
+  otro introducior password cuando existe el email 
+
+
+
+
+
+
+

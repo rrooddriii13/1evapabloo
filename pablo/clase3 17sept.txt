@@ -1,0 +1,68 @@
+ 
+ ---------------------------------------------------
+	arquitectura aplicación
+ ----------------------------------------------------
+
+       |-------------------------------------------------en nuestra maquina ----------------------------------------------------|
+
+	FRONT		  servicios_react	BACK				SERVIDOR BD
+	clientes 		||					 	mongodb-> almacenamiento datos perrsistente ej.> productos,usuarios
+	navegadores ------------------------>   servidor			(local o en la nube)
+	SPA-React <------------------------	NODEJS   
+	 miEbay 				(servicios REST) --------------->almacenamiento/recup. datos JSON
+								<------------------
+
+										 SERVIDOR BD 
+								redis Para datos temporales de alta velocidad-> abajo
+								almacenamiento/recup datos inmediatos(ram) como datos de sesión usuario
+
+ Front : usuario interectuar-> maneja la interfaz con la que los usuarios interactúan.
+ Servicios de React: Punto de enlace entre frontend y backend.Hace la comunicacion entre la app react con la app (back y front)
+ Back: lo q corre por detras es decir aquello q va a recibir los datos x parte de los clientes
+
+ ====================================
+
+ haces validaciones en el lado del clienet (navegador del clienet) el usuario escribe datos del formulario y luego hace submit 
+ lo envia al servidor con las validaciones q hayas puesto en el lado cliente
+
+ en el servidor no seria necesario, siempre hacer validacionees en el back
+
+ siempre que necesites una variable que almace un tipo de dat q se cambie por accion de un evento de usuario necesitas meterla dentro 
+ del state state-> es un almacen de datos que tiene el componente con variables q van cambiando conforme el usuario interactua con el componente
+
+ —--------------------------------------
+ state de un componente 
+ —--------------------------------------
+ el state de un componente lo forman variables q quieres interceptar ante eventos que produce el usuario sobre el componente .para manejar las variables del state
+
+ se usa el hook :useState
+
+ hook es una funcion js del paquete React  q admite determinados parrametros en funcion del hook y q da funcionalidades A TODOS  los componentes de la aplicación
+ la sintaxis de esta funcion empieza en use
+ 
+ el hook useState admite como unico parametro:
+
+	-valor constante con el q inicializar la variable del state q estas creando
+	– o un function sin parametros q debe retornar(DEVOLVER) un valor constante con el cual se inicializa la variable del sate 
+
+ este hook(funcion) ,devuelve un array de dos posiciones:
+
+	-en la posicion 0 se devuelve el valor q tienen en ese momento la variable del state (valor inicial pero si pones algo lo machaca)
+	-en la posicion 1 se devuelve una funcion setter para cambiar el valor de la variable del state (ante un evento)
+
+ se emplea (destructurando arrray)
+
+ let [ nombre_variable_state,setNombre_variable ]  = useState  ( valor_inicial | () => {...; return valor_inicial)
+ almacenas el valor inicial (o el q vair cambiando / refrescando ante el evento del usuarop
+
+
+el .test es un metido q le pasas ña vadena y te dice si cumple el patron true o false
+
+
+ —EXTENDIONES 
+ snippets 
+ eslint  
+ es7 + react 
+ Javascript(es6) snippets 
+
+ —-

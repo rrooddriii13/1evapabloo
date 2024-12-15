@@ -1,0 +1,313 @@
+ 
+
+ 
+ ---------------------------------------------------
+	arquitectura aplicación
+ ----------------------------------------------------
+
+       |-------------------------------------------------en nuestra maquina ----------------------------------------------------|
+
+	FRONT		  servicios_react	BACK				SERVIDOR BD
+	clientes 		||					 	mongodb-> almacenamiento datos perrsistente ej.> productos,usuarios
+	navegadores ------------------------>   servidor			(local o en la nube)
+	SPA-React <------------------------	NODEJS   
+	 miEbay 				(servicios REST) --------------->almacenamiento/recup. datos JSON
+								<------------------
+
+										 SERVIDOR BD 
+								redis Para datos temporales de alta velocidad-> abajo
+								almacenamiento/recup datos inmediatos(ram) como datos de sesión usuario
+
+ Front : usuario interectuar-> maneja la interfaz con la que los usuarios interactúan.
+ Servicios de React: Punto de enlace entre frontend y backend.Hace la comunicacion entre la app react con la app (back y front)
+ Back: lo q corre por detras es decir aquello q va a recibir los datos x parte de los clientes
+
+ ---2oct 
+ 
+ en el submit  tengo q usra el RegistrarCliente y pasarle el obj con los valores validados (al habilitarse el boton)
+        let _respuesta = restService.RegistrarCliente({
+            nombre: formData.nombre.valor,
+            apellidos: formData.apellidos.valor,
+            email: formData.email.valor,
+            password: formData.password.valor
+        });
+        /como es asincrono este console log se lanza antes de recibir la respuests
+        /arreglar pa q no salga undefinde q salgan l,os datos el servidor
+        console.log('datos recibidos del server NODEJS ante el registro :',_respuesta);
+        */
+	
+
+  —-----------------
+
+ JavaScript solo tiene un único hilo de ejecución, lo que significa que procesa una instrucción a la vez. 
+ Sin embargo, cuando necesita hacer una operación que tarda en completarse (como leer un archivo o pedir datos a un servidor),
+ la lanza y sigue adelante con el resto del código sin esperar. 
+ Para volver y manejar el resultado cuando la tarea termina, hay tres enfoques en JavaScript:
+
+ como codificar codigo asincrono JS: 
+ -events y funciones callback-> le pasas directamente la fun  callback que quieres q ejecute js cuando 
+ dipare el evento de finalizacion la funcion ya la tiene y esta pendiente si el evento se dispara o no y en el momento q se dispara ejecuta la funcion 
+ -objeto PROMISE
+ -async/await
+ —--------------------------
+
+ loq hay q tener en cuenta q JS es monohilo y solo puede ejecutar código sincrono (de forma secuencial);
+ cuando ejecuta instrucciones q le llevan tiempo,las lanza y salta ala siguiente instruccion 
+ ¿¿como vuelve o recupera el resultado de esa instruccion o operacion q esta pendiente?? hay tres formas:
+
+ –-eventos y funciones callback:
+ cuando defines la operacion asincrona,siempre se le pasa una funcion callback ("vuelta de llamada ")
+ q es la q se va a ejecutar cuando la operacion asincrona finaliza y dispara un evento de finalizacion 
+ esta funcion callback sera el headler o manejador del evento de finalizacion de la operacion asincrona
+
+
+ para obj propios mios tengo q crear mis propios eventos dispararlos yo y crear las funciones callback
+ q se ejecuten cuando esos eventos q lanza el obj se disparan 
+
+ para crear o hacer un objeto js sea susceptible(capaz) de generar eventos,te creas una propiedad, en el objeto 
+ de tipo EventTarget-> es una clase js q hace es q me permite lanzar obj personalizados y añadir lisener a ese obj
+
+ EL obj EventTarget permite crear objetos que pueden emitir eventos y recibir "escuchadores" (listeners) para reaccionar a esos eventos.
+   
+ ej  evento personalizado consola google 
+ let miTarget = new EventTarget();//creas un obj q puede lanzar eventos personalizados
+
+ cuando este obj dispare el obj saluda la func callback q va a ejecutar sera_>  b
+
+ miTarget.addEventListener('saluda',(ev) => {
+    console.log('evento disparado por variable miTarget',ev)}
+ ) 
+
+ disparar evento  el evento saluda dispara la funcion callback 
+ como es evento personalixado tienes q usar la clse CustomEvent(),hay mouseEvent ...hay mas eventos
+ 
+ cuando yo le de a enter este obj va a disparar el evento y automaticamente este lisener se va a ejecutar
+ miTarget.dispatchEvent(new CustomEvent('saluda'))//disparas el evento personalixado saluda
+
+ evento disparador por variable miTarget CustomEvent {isTrusted: false, detail: null, type: 'saluda', target: EventTarget, currentTarget: EventTarget, …}
+
+
+  Para disparar eventos personalizados con .dispatch tienes q crearte objetos de tipo CustomEvent(‘nombre_evento’)
+
+ LEER-> https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent
+
+
+ ej -> tengo un obj propio y quiero q sea capaz de disparar eventos y asu vez poder escuchar y ejecutar funciones callaback ante ellos (handler)
+
+ let miobjeto={
+	generaEventos : new EventTarget(),<--con esta prop. el obj js “miobjeto” ya puede disparar eventos              
+					  con metodo .dispatchEvent() y añadir handler o fun callback (listener) 
+	....				 a esos eventos con metodos .addEventListener()
+ 
+}                        		 -- para disparar eventos personalizados con .dispatch tienes q crearte obj
+					   de tipo CustomEvent('nombre_evento')
+
+  como implementarlo en miservicio -en el rest 
+  mi obj servicio (de react(restService) va a ser capaz de cuando acasbe la operacion asincrona dispare un evento 
+  diciendo como q oye ya tengo el resultado-> si quiero q este evenro pùeda lanzar eventos le tengo q meter una
+  propiedad con el event target
+ 
+
+  restService.addCallBackEvent('peticionCompletadaRegistro', callback);
+  se llama a addCallBackEvent en lugar de hacer directamente:
+  restService.generaEventos.addEventListener('peticionCompletadaRegistro',
+ 
+  ver q ya no sale undefined xq le añades el lisener para trabajar con la respuesta del servidor una vez recibida
+ 
+  restService.RegistrarCliente(
+          {
+               nombre: formData.nombre.valor,
+               apellidos: formData.apellidos.valor,
+               email: formData.email.valor,
+               password: formData.password.valor,
+          }
+   );
+
+  restService.addCallBackEvent('peticionCompletadaRegistro',(ev)=>{
+            console.log('Datos recibidos del server de nodejs ante el registro....', ev.detail);
+  })
+
+
+
+ ej: 
+  este obj js antes determinadas acciones puede disparar eventos(cuando haces la accion ejecuta la funcion)
+
+  imaginate q es un boton cuando haces click en un bton se ejecuta la accio pero se pueden ejecutar las funciones q quieras van en casacada q van por orden 
+
+	 callback-1 callback-1
+	 callback-2 callback-2
+	  …            ….
+ 	evento	      evento
+      ------------------------
+               |
+          +-------------+
+          | restService | -> dispara evento.. y si tiene un callback ala escucha 
+	  +-------------+    yo diparo el evento y en ese evento tiene un ob con propi detail: q aqui va la respuesta del server (datos)
+			     q se lo pasas ala funcion callback y los tierne ahu
+
+   cuando haces accion:RegistrarCliente ->  este obj dispara un evento cuando provoca la accion el componente Registro
+	generada(LA EJECUTA) por componente Registro.js
+
+   dispara el evento este obj tien stack(pila) q es evento funciones evento funciones para evento registo funciuon funcion login ...
+
+  
+  en una funcion normal el this no es lo mismo q el this de una funcion landa
+  en una funcion normal el this hace referencia al obj _petAjax xq es el obj q realmente invoka al metodo y en la cual la duncion esta definida como anbito (la de abajo)
+   petAjax.addEventListener('readystatechange', function(ev) => {
+  
+  en una funcion lamda el this hace referencia  al obj global al obj superior q seria restService( siempre al obj mas global ) q esta invoka esa landa
+  en una funcion normal this hace referencia al obj q la invoka
+ -------------------------------------------------------------------------
+
+/*--------- 1º forma de hacerlo usando callbacks y eventos ------------------
+ let restService = {
+    generaEventos: new EventTarget(), //<-- permite al objeto restService generar o disparar/escuchar eventos
+    RegistrarCliente:function(datoscuenta){
+
+        //codigo ajax para mandar al server los datos de la cuenta a registrar....
+        //en datoscuenta va el objeto JSON q manda componente Registro.js:  { nombre:.., apellidos: .., email: ..., password: ...}
+        let _petAjax = new XMLHttpRequest();
+
+        _petAjax.open('POST','http://localhost:3003/api/zonaCliente/Registro');
+        _petAjax.setRequestHeader('Content-Type','application/json')
+        
+        _petAjax.addEventListener('readystatechange', (ev) => {
+            if(_petAjax.readyState === 4 ){
+                //console.log(_petAjax.responseText)
+                let _respuestaServer = JSON.parse(_petAjax.responseText);
+                //cuando esta operacion asincrona acabe no quiero devolver la respuesta ya lo q quiero es q el 
+                /obj dispare un evento como diciendo ya tengo los datos y en los datos del evento van a ir los datos del server
+                //return _respuestaServer;//devuelves el jsom
+                //this.generaEventos.dispatchEvent(new CustomEvent('peticionCompletadaRegistro'));//este obj puedes generar cualquier tipo evento
+                //si quiero pasarle datos a este evento personalizado  le tengo q pasar un obj con prop detail : con la respuyesta del server detail-> son los datos dela respuesta del server
+                this.generaEventos.dispatchEvent(new CustomEvent('peticionCompletadaRegistro',{detail: _respuestaServer}));//ya puede disparar eventos
+            }
+        })
+        _petAjax.send(JSON.stringify(datoscuenta))
+    },
+    //me creo un metodo para q sea capaz de añadirle callback
+    addCallBackEvent : function(nombreEvento , callback){ //<-- este metodo del obj permite añadir handler o func callback ante even personalizados
+        //ANTES DE añadir  la funcion callaback para tratar el evento , habria q comprobar si esta añadida de antes de como handler... funcion manejadora
+        entoneces si ya existe no la añades para hacerlo te puedes creaR UN obj Map donde identificar cada funcion q añades a cada evento
+        
+        this.generaEventos.addEventListener(nombreEvento,callback);//este thhis aunta al obj q define este metodo en restService
+    },
+    LoginCliente:function(email,password){
+        //codifo ajax poara haecer login de los datos de la cuenta.
+    }
+}
+*/
+
+ en Registro.js
+restService.RegistrarCliente(
+            {
+                nombre: formData.nombre.valor,
+                apellidos: formData.apellidos.valor,
+                email: formData.email.valor,
+                password: formData.password.valor,
+            }
+        );
+        //LE AÑADO un listener para este evento para trabajar con la respuesta del servidor una vez recibida , 2 para fun calla q se ejecute cuando se dispare el evento x el obj restService
+        restService.addCallBackEvent('peticionCompletadaRegistro',(ev)=>{
+            console.log('Datos recibidos del server de nodejs ante el registro....', ev.detail);
+        })
+
+
+
+ ----------------------------------------------------------------------------
+
+
+
+
+ promesas-> son objetos Promise ,representan la “promesa” de un valor q se va a entregar en un futuro inmediato 
+ cuando la tarea asíncrono finalice su ejecucion
+ cada vez q quieras hacer una tare asincrina te creas ub obj Promise; 
+  el constructor admite como UNICO PARAMETRO una funcion esa funcion asu vez tiene dos parametros ;
+
+ -resolve --> 1 parámetro de esa funcion sirve para devolverle valor q devolver la promeso
+	  -> sirve para establecer el valor q devuelve la promesa cuando la operacion asincrona acaba
+ -reject-> 2 parametro de esa funcion (es cuando falla) sirve para establecer el error producido en la ejecucion de la 
+ operacion asincrona (ha ocurrido algun fallo en el transcurso) si la operacion acaba mal el tipo de error q devuelve
+
+ para interceptar esos valores q genera la promesa cuando acaba CUANDO ACABA (tanto si acaba bien y ejecuta el resolve 
+  
+como si acaba mal y ejecuta el reject  el obj Promise 
+
+ .then ((datos_enviado por el resolve) => {...)-> metodo q se ejecuta cuando LA PROMESA ACABA BN y
+ recibe los datos enviados `por el  resolve de la misma como parametros de una fun para tratarlos
+
+ 		
+ .catch( (error_enviado_por_reject)={...} ) ---> método q se ejecuta  cuando la PROMESA ACABA MAL y recibe los datos
+ enviados por el reject de la misma como parámetros de una función oara tratar el error
+				
+
+ 1ª paso : crear el obj promise para operaciones asincrona
+
+ let  _petAjax = new Promise( 
+  (resolve,reject) =>{
+		…_> todo codigo asincrono
+ 		resolve(datosserver);-> los datos q el servidor me manda si todo acaba bieen (los datos q quiero mandar si se produce bn)
+		..
+		reject(errorServer)-> los fallos q se producen  en la tarea asincrona y me devuelve el server
+ 		}
+ )
+
+ 2º paso :usas metodo .then() y catch() sobre el obhj promise
+  _petAjax.then((datosServer)=>{,,..})
+  .catch((erroroServer) => {...})
+
+  -objeto PROMISE
+  -async/await
+
+
+
+
+
+
+
+
+
+  ------------------------------------------------------
+  con promeses restSerrcie.js
+  
+ let restService={
+    RegistrarCliente: function(datoscuenta){
+        let _opAsincronaServer=new Promise(
+        (resolve,reject)  => {
+            let _petAjax = new XMLHttpRequest();// Crear una solicitud AJAX
+
+            _petAjax.open('POST','http://localhost:3003/api/zonaCliente/Registro');
+            _petAjax.setRequestHeader('Content-Type','application/json');
+            _petAjax.addEventListener('readystatechange', (ev) => {
+                if(_petAjax.readyState === 4 ){//verificas q la solicitud esta completa
+                    let _respuestaServer = JSON.parse(_petAjax.responseText);//transformas la respuestaJson del servidor en un obj js
+                                        
+                    //segun la respuesta q de server json(cod x mensaje x) si el cod es=0 es q fue bn si es >0 fue mal
+                    if(_respuestaServer.codigo ===0 ){
+                        resolve(_respuestaServer)
+                    }else{
+                        reject(_respuestaServer)
+                    }
+                }
+            });
+            _petAjax.send(JSON.stringify(datoscuenta));//envias los datos en JSon 
+        })
+        // Retornamos la promesa para permitir el manejo del resultado con `.then` y `.catch`
+        return _opAsincronaServer;
+    },
+
+ 
+
+  Registro //con PROMESAS
+        restService.RegistrarCliente(
+            {
+                nombre: formData.nombre.valor,
+                apellidos: formData.apellidos.valor,
+                email: formData.email.valor,
+                password: formData.password.valor,
+            }.then(respuestaServer => console.log('respuesta de nodejs OK en registro...',respuestaServer))//esto se ejecuta si la promesa acaba bn
+            .catch( errorServer => console.log('error en nodejs en registro....',errorServer))
+        );
+  -------------------------------------------------------
+
+ 

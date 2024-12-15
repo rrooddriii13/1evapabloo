@@ -1,0 +1,51 @@
+es como si esto no se hiciera bn 
+            let _parametro = subcats===undefined  ? 'principales' : subcats.pathCategoria;
+
+miServidorWeb.get('/api/zonaTienda/DevolverCategorias', async function(req, res) {
+    try {
+        const pathCategoria = req.query.pathCategoria;  // Parámetro enviado por la solicitud (si hay alguno)
+
+        let categoriasPrincipales = [];
+        let subcategorias = [];
+
+        // Si se especifica un pathCategoria, usamos ese filtro para las subcategorías
+        if (pathCategoria) {
+            // Obtener las subcategorías para una categoría específica
+            categoriasPrincipales = await clienteMongoDB.db(process.env.DB_MONGODB)
+                                                        .collection('categorias')
+                                                        .find({ pathCategoria: new RegExp(`^${pathCategoria}-`) })
+                                                        .toArray();
+        } else {
+            // Si no se especifica pathCategoria, obtenemos todas las categorías principales
+            categoriasPrincipales = await clienteMongoDB.db(process.env.DB_MONGODB)
+                                                        .collection('categorias')
+                                                        .find({ pathCategoria: { $regex: /^[0-9]+$/ } })
+                                                        .toArray();
+        }
+
+        // Obtener las subcategorías de todas las categorías principales
+        // Filtrar subcategorías que tienen el mismo número de categoría principal en pathCategoria
+        subcategorias = await clienteMongoDB.db(process.env.DB_MONGODB)
+                                           .collection('categorias')
+                                           .find({ pathCategoria: { $regex: `^${pathCategoria}-` } })
+                                           .toArray();
+
+        // Responder con las categorías y subcategorías
+        res.status(200).json({
+            codigo: 0,
+            mensaje: 'Categorías y subcategorías recuperadas con éxito!',
+            datos: {
+                categoriasPrincipales,
+                subcategorias
+            }
+        });
+    } catch (error) {
+        console.error('Error al recuperar categorías:', error);
+        res.status(500).json({
+            codigo: 5,
+            mensaje: 'Error al recuperar categorías',
+            datos: []
+        });
+    }
+});
+

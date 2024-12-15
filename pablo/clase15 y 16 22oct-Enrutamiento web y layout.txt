@@ -1,0 +1,457 @@
+   
+
+  para hacer tienda  nos creamos un componente layout  q tiene un  header y un un footer ... 
+  hay q crearse el componete meter en la bbddd las categorias y recuperarlas de la bdd y mostrarlas 
+
+
+
+hook -> es una funci global js q devurelve un valor 
+
+  ----------------------------------------------------
+ ENRUTAMIENTO EN REACT:modulo enrutamiento
+ ----------------------------------------------------
+ se encarga de detectar cualquier cambio en la url del navegador (manejando history y el window.location del navegador)
+ y ante una determinada url carga un determinado componente asociado a la misma
+ antes los cambios en la url carga el componente
+
+ 1º paso) instalamos el paquete q se va a encargar del modulo de enrutamiento: REACT ROUTER DOM
+	 tiene predefinidos objetosJS/hooks/componentes react van a servir para manejar el enrutamiento
+		
+			npm install react-router-dom localstorage match-sorter sort-by --save
+
+ 2º paso) configurar el modulo de enrutamiento, usando ina funcion dentro del paquete:
+		
+	createBrowserRoute() <---- se le pasa como parametro un array de objetos Rpute (definidos en el paquete)
+	   cada objeto Route del array representa la carga de un componente ante una url
+		 
+		Para crear cada objeto Route establecemos sus propiedades como en cualquier objeto Javascript
+
+		- path: '/ruta/[:parametro]' <-- string q representa la url del navegador para el cual el objeto Route carga un comp.
+		-element: <NombreComponente .../> <-- componente React q el objeto Route carga en el arbol de componentes cuando
+						en el navegador aparece la url indicada en la prop. "path"
+		element.> el nombre del componrnte q el obj ROute va a cargar en el momento q en el navegador aprezca la url 
+
+
+	       - children: [ array_objetos_hijo_Route ] <--- array de objetos q incrustan componentes React
+		 dentro de un componente padre (típico de layout). Lo q obliga a React-Router-Dom es a 
+		 incluir un componente llamado <Outlet></Outlet> en el comp.padre
+		 y ahí dentro va a incrustar los comp.hijos
+
+		  ej:
+			{ path:'Cliente/MiPanel',
+			  element: <PanelCliente />, <----es el componente padre en código jsx debe existir <Outlet></Outlet>
+			  children: [
+			 		{ path: 'MisDirecciones', element: <MisDirecciones /> },
+				        { path: 'MisProductos', element: <PorductosAvender /> }
+				     ]
+				}
+
+		en la ruta seria Cliente/MiPanel/MisDirecciones el componente q cargo MisDirecciones -> lo incrusta solo en el outlet 
+		
+		loader -> mientras se craga el omponente el loader ya se esta ejecutando lo carga antes los datos disoponibles mucho antyes q el useEffecy
+		loader -> antes de cargar un componente necesitas cargar datos x eso siempre q peudas usar loader
+		
+		useEfect-> te pinta 1 el componete y si necesuta recuperar datos de un servicio externo (SERVIDORT) ESO TARDA TIMEPO 
+		1 TE LO PINTA Y HASTA Q NO recupera los datos pues aparace en blanco el 1 vacio 
+              -loader: nombre_funcion_asincrona | async function( { request, parameters} ) {
+					....
+					} <--- función asíncrona para la precarga de valores
+			 desde un servicio externo remoto, q recibe como parámetro 
+			un objeto con propiedades:
+
+			- "request": representa la petición HTTP:REQUEST q va a hacer el objeto Route desde React(cliente)
+			  al servicio (uso típico para meter en cabeceras los jwt de autentificación)
+			  EJ->imagina q el servicio le pasas un token autentificacvion ps eso va en un cabecera
+
+			- "parameters": representa los parámetros pasados en la url:
+			  la función SIEMPRE TIENE QUE DEVOLVER UN PARAMETRO (aunque sea null)
+
+			  ej:  { path: '/Tienda/Producto/:idProd,
+				element: <MostrarProducto />,
+				loader: async function ( {req, params} ){
+					let _idProducto=params.idProd;
+					let _pet=await fetch('http://localhost:3003/api...?codprod=${_idProducto}');
+					... 
+					return _productoJSON;
+					}
+				}
+
+			
+			ExPLICACION ME INTERSA RECOGER idProd(el parametro q el usuario a seleccionado para 
+			hacer una peticion al servicio para recuperar ese producto q lo obtengo atraves de params
+			atraves de params -> recupero el valor q el usuario a puesto en idProd 
+
+
+			ej: recuperar producto de una determinada categoria  eso son segmentos 
+			path: '/Tienda/Producto/:idcat/:idProd,
+			
+
+
+			LA EJECUCION DE ESTA LLAMADA ASINCRONA antes se solia hacer con el hook useEffect dentro del 
+			componente q necesitaba esos datos, pero es mas ineficiente pq 1º carga el componente y 
+			luego hace la llamada, pudiendo no estar disponibles aun los datos asíncronos... con loader 
+			esto no pasa, pq se hace al revés, 1º llamada y después carga
+
+			    	¿¿como accede el componente a los datos devueltos por la función asíncrona del loader??
+				mediante un hook del paquete react-router-dom: useLoaderData()	
+
+				ej:
+				   import { useLoaderData } from 'react-router-dom';
+				   ...
+				   function MostrarProducto(){
+
+					const datosProducto=useLaderData();
+					... 
+					return (
+						<>...</>
+						)
+					}
+
+				EN ESTA VARIABLE -> datosProducto se almacena lo q devuleb la funcion del ejemplo anterior
+				y como se jecuta antes de q de se muestre el componente si o si lo tienes ya 
+
+			- action <------ muy util para formulario e interceptar el submit de los formularios para hacer validaciones
+						se usa en conjunto con componentes <Form> de react-router-dom
+
+
+ 
+   3º paso) usando el componente <RouterProvider router=... /> del paquete react-router-dom, habilitamos esos objetos Route definidos
+	en el paso anterior SIEMPRE HACERLO EN EL COMPONENTE PRINCIPAL DEL PROYECTO!!!
+	
+			<RouterProvider router={_objeto_Router_devuelto_metodo_createBrouserRoute_} />
+
+
+		------------------------------------------------------------------
+	vamos a crear el layout en la pagina de ebay 
+	instalar paquete -> PASO 1 -> EN REAct
+
+	en index.js cargamos el app-> q es el componente raiz de todos los componente s de la aplicacion 
+	 y hacemos el app.js
+
+
+	importamos esto 
+	import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+
+
+	const _routerObject=createBrowserRouter(
+	[
+		{path:'/Cliente/Login',element: <Login></Login>}, //si la rita es /Cliente/Login  me cargas el elemento Login 
+		{ path:'/Cliente/Registro', element: <Registro></Registro>}
+	]
+	);	
+
+	para habilitarlo dentro del return 
+
+
+	function App() {
+	return (
+		<>
+			<RouterProvider router={_routerObject}/>
+		</>
+	);
+ }
+
+	---
+   const _routerObject=createBrowserRouter(
+  	[
+		{path:'/Cliente/Login',element: <Login></Login>}, //si la rita es /Cliente/Login  me cargas el elemento Login 
+		{ path:'/Cliente/Registro', element: <Registro></Registro>},
+		//ruta para el layout
+		{
+			path:'/',
+			element: <Layout></Layout>,
+			children:[
+				{ path:'/Tienda/Productos/:catId', element: <Productos></Productos>,loader: restTienda.RecuperarProductosFromCat },
+				{ path: '/Tienda/MostrarProducto/:idProd',
+				  element: <MostrarProducto></MostrarProducto>, 
+				  loader: async function({req,params}) {
+					let _idproducto = params.idProd;
+
+					return null;					
+				  }
+				}
+			]
+		}
+	]
+    );
+
+
+  cambiamos zonaPortal a zonaTienda
+  nos creamos directorios -> layoutComponent,mostrarProductoComponent,productosComponent
+  
+  meterr en cada subcarpetas sus componentes ej en layout -> Footer y Headder 
+   layoutComponente -> Layout.js y Layout.css y carpetas footerComponent-> Footer.js Footer.css y headerComponent-> Header.js Header.css
+ 
+
+	
+   crear en mostrarProductoComponent->MostrarProducto.js y MostrarProducto.css 
+   crear en  productosComponent -> Productos.js y Productos.css
+
+   estilos csspñara componente no hacerlos globales 
+
+	const _routerObject=createBrowserRouter(
+	[
+		//COMPONNETE que quieres cargar ante esa ruta (url)
+		{path:'/Cliente/Login',element: <Login></Login>}, //si la rita es /Cliente/Login  me cargas el elemento Login 
+		{ path:'/Cliente/Registro', element: <Registro></Registro>},
+		//ruta para el layout
+		{
+			path:'/',
+			element: <Layout></Layout>,
+			children:[
+				{ path:'/Tienda/Productos', element: <Productos></Productos>},//,loader: restTienda.RecuperarProductosFromCat },
+				{ path: '/Tienda/MostrarProducto/:idProd',
+				  element: <MostrarProducto></MostrarProducto>, 
+				  loader: async function({req,params}) {
+					let _idproducto = params.idProd;
+
+					return null;					
+				  }
+				}
+			]
+		}
+	]
+   );
+   
+  
+  para formularios se usa el formik-> formik.org/docs/overview
+
+  cuando es un layout
+
+
+  //ruta para el layout
+		{
+			path:'/',
+			element: <Layout></Layout>,
+			children:[
+				{ path:'/Tienda/Productos', element: <Productos></Productos>},//,loader: restTienda.RecuperarProductosFromCat },
+				{ path: '/Tienda/MostrarProducto/:idProd',
+				  element: <MostrarProducto></MostrarProducto>, 
+				  loader: async function({req,params}) {
+					let _idproducto = params.idProd;
+
+					return null;					
+				  }
+				}
+			]
+		}
+
+
+
+   ps navvigate lo iporta de reactt router dom  
+   navigate es un componente q lo q hace es q salta ala url q quieras  que pongas en el to 
+
+  cuando es un layaout no se pone un path en la propiedad padre 
+  lo q se hace es hacer un path en el hijo q salte al q tu quieras
+
+
+  si no pones la \ al final lo deja en balnaco y ahora
+   es la forma de hacer principal una pagina dentro del laypu en mi caso esta /Tienda/Productos
+  
+  {
+			element: <Layout></Layout>,
+			children:[
+				{ path:'/',element: <Navigate to='/Tienda/Productos' />    },
+				{ path:'/Tienda/Productos', element: <Productos></Productos>},//,loader: restTienda.RecuperarProductosFromCat },
+				{ path: '/Tienda/MostrarProducto/:idProd',
+				  element: <MostrarProducto></MostrarProducto>, 
+				  loader: async function({req,params}) {
+					let _idproducto = params.idProd;
+
+					return null;					
+				  }
+				}
+			]
+		} 
+  
+  
+
+
+
+  cuando haya muchas funciones asincronas lo q haces es q te creas un modulo aparte  y las defines ahi
+  entonces en srvicios  renombre resrtServicio a restCliente xq son peticin hacia peticiones del pliente
+  lo cambias en todos los archivos login,registro y te  creas otro en servicio restTienda.js 
+ 
+
+  el restCliende solo para 
+  microservicios -> la app llama a servicios individuales sis se cae uno  no pasa nada xq el resto sigue funcionando
+  
+
+  parctica en  vez de montar todos juntos  montar en otro servicio  
+  en ebay node le llams ebaynodejs usuariis o tienda ty ahora tieness q klanzar tres 
+  
+
+
+  --CLASE 16 :> 23/10
+  restTienda
+
+
+	voy a meterlo en el mismo servidor pero lo suy seria montarlo como si fuera microservicios indepedienets endedientes uno para clientes otro para productops
+ let restTienda = {
+    //en el parametro deestructurio xq como la func se va a usar en el laoder  tiene q tener estos
+    //en vez de definir en el loader la funcion asincrona pongo este metodo 
+
+    //este metodo lo voy a emprear para subcategorias y lo hago pasandole un id de categoria
+    DevolverCategorias: async function({ request,params }) {
+
+        try {
+            //parametros q le pasa en el loader
+            console.log('parametros del loader de react-router-dom....', request, params);
+             
+            //A CODIFICAR: tb hacerlo para q valga para recuperar subcategorias, no solo categorias ppales
+
+            let _resp  = await fetch('http://localhost:3003/api/zonaTienda/DevolverCategorias');
+            let _bodyResp = await _resp.json();//si va todo bn devuelvo todo el obj categoria q voy a devolver
+
+    .datos xq el servicio me va a devolver un obj json con este formato:un obj{ codigo: x, mensaje: ..., datos: .... }
+            
+	   console.log('respuesta del servicio para recuperar categorias...', _bodyResp)
+            return _bodyResp._datos;
+
+        } catch (error) {
+            console.log('error al recuperar categorias...', error.message);
+            return null;  
+        }
+               
+    }
+ }
+  
+
+  ENTONCES VOY AL App.js
+ 
+
+			
+ Con esto no la ejecuto es el punturo ala definicion (xq aqui va la definicion de una funcion no la ejecucion )
+   loader:restTienda.DevolverCategorias
+
+   //asi mal xq es el resultado de la ejecucion->loader:restTienda.DevolverCategorias()
+
+
+  en elñ loader tengo q poner la definicion de una fun asincrona
+  
+  por eso es mejor modulizarlo  en vez de definir aqui la funcion la importo ddel obj js q yo me definido
+  
+  ej .>: loader: async function ({req,params}){  
+	
+  } 
+  
+  
+  loader:restTienda.DevolverCategoria -> sin ejecutar lo q hace es precargar
+  
+  apunta al adefinicion de la funcion y la va a ejecutar pero
+  hace  el fecth en el momento q el usuario pone la url q afecta a este componente va a estar cargando 
+  x debajo  el loader y ejecutando la funcion 
+
+
+  en el layout como recuperaria los datos con useLoaderData-> recupero lo q me devuelve la funcion loader del layout 
+        en la variable _categorias recupero el resultado de la ejecucion de la funcion asincrona del loader
+	const _categorias=useLoaderData();
+
+    
+
+
+  las  categorias las usa el header ps se las paso como una propiedad = pasar valor de un comp padre a un hijo  
+
+            <Header categorias={_categorias}></Header>
+
+
+  en el header le paso un parametero .> function Header( { categorias } ) {
+
+ q categorias es un array q tiene las categorias principales q tengo q pintar 
+
+  
+
+  ahora tengo q pintar las categorias  >un li x cada obj q hay en categorias
+
+  comol estamos  con react-router-dom usar NavLink o llink no a 
+  https://reactrouter.com/en/main/components/nav-link
+
+
+  LO Q hemod hecho pintar las catergorias prinmcipales y ciando haces click en eellas  se invokke a /Tienda/Productos
+  y se le pase el id  de las cattegorias para q muestre las subcategorias y profuctos x  ejemplo mas venfifod x categpria
+
+    {
+         /*-- Aquí irían las categorías */
+        categorias &&  
+        categorias.map(
+          (cate,pos)=>{
+                     return (  
+                     //cuando esyoy recoriendo bucle con map te exige read q les pongas una clave q los identifique 
+		     de forma unica xq si no aparecebn warning clave unica podemos usar indice -> pos p el _id
+                            <li  key={cate._id}>{/* key= pos */}
+                            	<NavLink  className='dropdown-item' to={`/Tienda/Productos/${cate._id}`}>
+                                	{cate.nombreCategoria}
+                                </NavLink>
+                            </li>
+                            )
+                  }
+                  )
+                                       
+   }
+
+ habilitar endpoint de node  en la parte de node hay q hacer un metodo parta q me devuelva este fech 
+
+ let _resp  = await fetch('http://localhost:3003/api/zonaTienda/DevolverCategorias'); de restTienda
+
+  
+
+
+
+
+
+  para las categorias es decir para cogerlas de ebay  vas  a ebay.com 
+  te pones encima sub categorias  inspeccionae y ves q tiene una clase el nav  ps 
+  todos los li sion los enlaces y los q tienen dentro (categrias y sub) 
+  document.querySelectorAll('.vl-flyout-nav__sub-cat-col li')
+ 
+  transformarlo a array par ahacer foreach 
+  Array.from(document.querySelectorAll('.vl-flyout-nav__sub-cat-col li'))
+
+ cada li transforamlo a un obj para pasarlo al abbdd
+
+ Array.from(document.querySelectorAll('.vl-flyout-nav__sub-cat-col li')).map(li => {return {pathCategoria:'',nombreCategoria:li.innerText}})
+
+ copias lo q te da y lo pasas a block de notas y lo pasas como un fichero .json 
+
+ mal 
+ 
+
+ coge los q no esten vacis
+ Array.from(document.querySelectorAll('.vl-flyout-nav__js-tab a')).filter( a=> a.innerText !== '\n\n') 
+ ahora hay 144 las a son categorias pincipal y  si tiene est clase subcategproa a.vl-flyout-nav__js-link
+
+
+
+  esto bueno 
+
+let _cats=[]; let _contcat=0; let _contsubcat=0;
+
+Array.from(document.querySelectorAll('.vl-flyout-nav__js-tab a')).filter( a=> a.innerText !== '\n\n').map( a=> {
+
+    if( a.getAttribute('class')!=='vl-flyout-nav__js-link'){
+        //categoria principal  
+        _contcat+=1;
+        _contsubcat=0;
+            _cats.push({ pathCategoria: _contcat.toString(), nombreCategoria: a.innerText });
+    } else{
+        //subcategoria
+        _contsubcat+=1;
+        _cats.push( { pathCategoria: `${_contcat}-${_contsubcat}`, nombreCategoria: a.innerText})
+    }    
+}) 
+
+
+  _cats -> y te salen 
+  
+   luego en vez de hacerlo asi puedes hacerlo sin desexcturar 
+   function Header(props ) {
+  let _categorias=props.categorias;
+ 
+ siemrpre el comp hijo va a recibir un obj props predifinido  y coje como propiedades de ese obj prop 
+ todos los atributos q le pasa el componente padre es decir si 
+ ej :>            <Header categorias={_categorias} textoABuscar= 'introduce algo ,,,'></Header>
+
+  tendrias props con dos propiedades->categorias y textoABuscar=
+ y en el este desescturarioas
+ function Header( { categorias,textoABuscar } ) {
+

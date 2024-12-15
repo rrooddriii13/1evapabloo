@@ -1,0 +1,567 @@
+   
+
+						 en ram 
+ accessToken =’ ‘ —------------------------------> direccion 1500: ‘ ‘//direciion 1500 va vacio 
+ accessToken=wekww  			          direciion 1500: wekww
+
+
+  con un obj-> en direccion 300 esta ell puntero no el obj el obj esta en dir_heap_15000
+										heap ram (celda)
+ comprarYA={ } —-----------------> direccion 3000: dir_heap_15000—-----------> celda 15000: producto_id=’’
+									       celda 15001: cantidad:0 
+
+ imaginate q quiero modifivvar esta variable del state a pelo 
+
+
+comprarYA={ producto: 12345,----> direccion 3000: dir_heap_15000—------------>celda 15000:producto: 12345 		
+	   cantidad:3}							      celda 15001 : cantidad:3
+
+ como no ha cambiasdo el puntero(dir_heap_15000) zustand  y react dicen q no han cambiado el state 
+  y las propiedadesdel obj si han cambiado pero como el punntero no cambio dice3 q el obj es el mismo
+ pero q no es el mismo q has moficiado las propiedaddes no puede ser el mismo pero q el mira el puntero
+
+ como no ha cambiado el puntero dice q el obj es el mismo -> como el puntero no cambia el efecto no se dispara 
+ nunca  (no refresca la pagina,no muestra nada nopinta nada ) xq no cambias el obj como tal 
+
+
+ cuando quieres cambiar objetos y arrays lo q haces es mutar un obj o array->>
+ MODIFICAS LAS PROPIEDADES DEL  ARRAY OBJ pero el obj en memoria no cambia apunta mismo direccion /sitio de memoria 
+
+--------------------------------------------------------
+ lo q tienes q hacer es clonarte el obj con el estado anterior y modificarlo -> lo de los ... 
+
+  https://zustand.docs.pmnd.rs/guides/updating-state
+
+
+ asi clonas ->  partes de lo q tiene y modificas lo q ami me intersa
+
+ Normal approach
+   Similar to React or Redux, the normal approach is to copy each level of the state object. This is done with the spread operator ..., and by manually merging that in with the new state values. Like so:
+
+   normalInc: () =>
+     set((state) => ({
+       deep: {
+         ...state.deep,
+       nested: {
+         ...state.deep.nested,
+       obj: {
+         ...state.deep.nested.obj,
+         count: state.deep.nested.obj.count + 1
+        }
+      }
+
+
+
+   ej asi esta mal xq estas mutando el obj cliente  apunta a la misma referencia en ram...no estas construyendo uno nuevo!!!
+   murtas  el valor del state q tienes no lo estas modificando 
+                 setCuentaCliente: (datosCuenta)=>set( 
+                                                      state=> {
+                                                                const {email,nombre,apellidos,activada,imagenAvatar,nick}=datosCuenta;                                                        
+                                                                return { cliente.cuenta={ email,nombre,apellidos,activada,imagenAvatar,nick} }
+                                                              }
+                                                      )
+
+
+
+  vamos a usarlo en el lohin  (el hoom )  xq vamos a establecer el accestoken el refresh y en clienet la propiedad 
+  cuenta  todo el obj cliente ahu 
+
+  
+
+  en el headder quiero q cvuando tu te leogeas /(inicias sesion) ps te sale ahi una imagen avatar y hola y nombre
+  usuario 
+ 
+ voy hacer un join cuando devueklva el obj cliente lo voy a meter dentro
+  
+
+  storeGlobal
+//modulo js q exporta hook para usar global state creado por store de zustland
+
+import { create} from 'zustand';
+
+
+//creamos el state global mediante un store de zustand usando la funcion create()
+//admite un unico parametro q es la funcion creadora de dicho store; esta funcion creadora
+//del state global tiene 3 parametros a su  vez: set, get, store
+//esta funcion debe devolver un objeto q va a representar el state global de la aplicacion
+// -set es una funcion para cambiar el valor del objeto del state global
+// -get es una funcion para recuperar el valor del objeto del state global
+// -store es un objeto q representa los valores q exporta el hook y q pueden usar los componentes...
+
+
+//en react los hopok se llama con use 
+const useGlobalStore = create(
+    (set,get,store)=>{
+        console.log('parametros de funcion creadora del state global mediante store...', set.toString(), get.toString(), store);
+
+        ///lo q devuelve esta funcion es lo q se almacena en el state gloval
+
+        //en el obj q se devuelve se usan propiedades pata recuperar valores para q los usen los componentes para mostrr en vistas .... 
+        // y si los componentes necesitan actualizar algun valor  defines funciones(metodos) dentro del objeto q usan la funcion set 
+
+        return{
+            //este obj q devuelbe  va a estar disponible para todos los componentes q lo usan con useGlobalStore
+            accessToken: '',//lo meto vacia hasta q se loggeen 
+            refreshToken: '',
+            cliente: {},
+            itemsPedido: [],//array q almacena producto,cantidad rodvuto cantidad...
+            comprarYa: { },         
+            //cuando te logeas bn node te da un acces y refresh ps quiero una funcion para q meta arriba el accestoken y refrestoken 
+            setAccessToken: jwt => set( state => ( { accessToken: jwt } ) ), 
+            setRefreshToken: jwt => set( state => ( { refreshToken: jwt} ) ),
+            
+            //#region esto estaria mal, pq estas mutandoel objeto cliente y apunta a la misma referencia en ram...no estas construyendo uno nuevo!!!
+            /*setCuentaCliente: (datosCuenta)=>set( 
+                                            state=> {
+                                                const {email,nombre,apellidos,activada,imagenAvatar,nick}=datosCuenta;                                                        
+                                                return { cliente.cuenta={ email,nombre,apellidos,activada,imagenAvatar,nick} }
+                                                }
+                                            )*/
+            //#endregion
+
+            setCuentaCliente: datosCuenta => set( 
+                                                state => {
+                                                    const { email,nombre,apellidos,activada,imagenAvatar,nick }=datosCuenta;
+                                                    return{
+                                                        ...state,
+                                                        cliente: {
+                                                            ...state.cliente,
+                                                            cuenta : {
+                                                                ...state.cliente.cuenta,
+                                                                email, //email:email
+                                                                nombre,//nombre:nombre
+                                                                apellidos: apellidos,
+                                                                activada, //activada:activada
+                                                                imagenAvatar: imagenAvatar,
+                                                                nick //nick: nick
+                                                            }
+                                                        }
+                                                    }
+                                                }                                  
+            )
+        }
+    }
+  ); 
+
+  export default useGlobalStore;
+  
+
+   -----------------------------------------------------------
+
+  impelmentarlo en el login    
+  
+  lo imporas 
+
+  //importarmos hook para hacer uso del state-global definido por zustand
+  import useGlobalStore from "../../../hooks_personalizados/hook_store_zustland/storeGlobal.js";
+
+  creamos las variables del sstae global 
+
+
+    //-------variables state global zustand ---------
+    //const accessToken=useGlobalStore( state => state.accessToken); 
+    // const refreshToken=useGlobalStore( state => state.refreshToken);
+
+    const stateGlobal=useGlobalStore(state => state);
+    console.log('valor del state global....', stateGlobal)
+
+    //to solo quiero estabkecer el valor del acces del refresh y de la cuenta 
+    const setAccessToken=useGlobalStore( state => state.setAccessToken);
+    const setRefreshToken=useGlobalStore( state => state.setRefreshToken);
+    const setCuentaCliente=useGlobalStore( state => state.setCuentaCliente);
+
+
+  importamos el navigate 
+  import { Link, useNavigate } from 'react-router-dom';
+
+  lo inicializamos 
+    //hook useNavigate de react-router-dom q devuelve funcion "navigate" para provocar el salto a un componente desde codigo
+    const navigate=useNavigate();
+
+  creamos esta funcion 
+ 
+    async function HandlerFullLogin(){
+        //codigo para comprobar en servicio de nodejs si email + password estan ok...
+
+        try {
+            //acces y refres van de la mano xq cuando caduq el acces pilla el refresh  luego siempore mandarlos dosi 
+            let _respuestaLogin=await restCliente.LoginCliente(emailUser, passwordUser);
+            console.log('respuesta del servicio de login de nodejs...', _respuestaLogin);
+
+            if(_respuestaLogin.codigo !== 0) {
+                throw new Error('password o email invalidos...intentalo de nuevo');
+            }
+
+            //en teroria en _respuestaLogin va un obj  //<---{ codigo:..., mensaje: ...,  datos: { accessToken:..., refreshToken:..., cliente: { ....}} }
+            // en datos va toda la indfo de lcientes 
+            setAccessToken(_respuestaLogin.datos.accessToken);
+            setRefreshToken(_respuestaLogin.datos.accessToken);
+            setCuentaCliente(_respuestaLogin.datos.cliente.cuenta);//solo cambio la cuenta no todos dfstos del cliente _>
+            // meteria la cuenta del obj cliente vacio q tengo en el global store(store GLobal
+
+            //rediriguir al usuario ala pagina de inicio 
+            navigate();
+        } catch (error) {
+            //mostrar error en vista del componente en rojo....para q intente meter de nuevo password
+            console.log('error en login...', error);
+        }
+    }
+    
+  
+  
+
+  luego lo pones en el boton para cuando ponfga la contraseña
+   
+     <div className="row mt-4">
+                <div className="col-4"></div>
+                <div className="col-2">
+                    <button 
+                    type="button" 
+                    name='Identifícate'
+                    className="btn btn-light w-100"
+                    //onClick={HandlerClickBoton}
+                    onClick={HandlerFullLogin}
+                    >
+                        Identifícate
+                    </button>
+                </div>
+    
+
+
+  implementarlo en el layout en el header 
+  vamos hacer q lel boton de inivia sesoion  o inicia CUENTA q recupere del global store  va a recuperar los datops 
+  del cliente ( la cuenta) si contiene algo lo sustituyes x el nick y la imagen 
+
+  si no contiene nada q salga el login ( q salga hola! identificate ) ->   q es el login 
+   
+  
+   https://getbootstrap.com/docs/5.3/components/dropdowns/
+
+
+    en el header  importar datos de la cuienta y en el boton inicio de sesion  semuwestra si el obj cuenta del global 
+    storee esta vacio 
+
+
+   
+   en el header importar datos de la cuenta ey en el botin de inicio de sesionb  se presenta solo si el objcuenta 
+   esta vacio (no se ha hecho login9 MOSTRAR INICIO DE SESION si no lo susrtituye por el nick q es el hola nombre
+
+   <div class="dropdown">
+     <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      Dropdown link
+    </a>
+
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#">Action</a></li>
+        <li><a class="dropdown-item" href="#">Another action</a></li>
+        <li><a class="dropdown-item" href="#">Something else here</a></li>
+      </ul>
+   </div>
+
+  ahora meter el cars
+
+  https://getbootstrap.com/docs/5.3/components/card/#horizontal
+
+
+   lo metes aqui  ern el li
+
+    {
+                                    cliente.cuenta ? 
+                                    (
+                                        <div className="dropdown">
+                                                <a className="btn btn-light btn-sm dropdown-toggle" href="/Cliente/Panel/Inicio" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    ! Hola {cliente.cuenta.email}
+                                                </a>
+
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        
+                                                    </li>
+                                                    
+                                                </ul>
+                                        </div>
+
+                                        
+
+                                    )
+
+
+
+  HEADER
+
+ import './Header.css'
+ import { useState, useEffect,useMemo} from 'react'
+  import { NavLink,Link } from 'react-router-dom';
+
+ import restTienda from '../../../../servicios/restTienda';
+
+ import useGlobalStore from '../../../../hooks_personalizados/hook_store_zustland/storeGlobal';
+
+ function Header( { categorias } ) {
+    
+    //en variable categorias hay un array de objetos tipo categoria
+    //con este formato: { _id:.., nombreCategoria:..., pathCategoria: ...}
+    //ej cat: Electronica--->Portatiles .>  pathCategoria-> me dice si es categoria pincipal o sub 
+    //             1       -     2
+
+    
+    //----------------- variables state global ---------------------------
+    const cliente = useGlobalStore(state=> state.cliente);
+
+    
+    //----------------- variables state local ----------------------------
+    const [ categoriaSelec, setCategoriaSelect ]=useState(null);
+    const [ subCategoriasCache, setSubCategoriasCache ]=useState({}); //<---- en cache meto un objeto asi, con props las categorias raiz, y como valor sus subcategorias: {  '1': [ ....], '2': [....] }
+    const [ timerCats, setTimerCats]=useState(null); //<--- timer delay  para cuando selecciones una categoria muestre subcats y puedas pinchar sobre ellas cuando pierde el foco la categ.del navbar seleccionada
+
+    
+    const subcategorias=useMemo(
+        ()=>{
+                return subCategoriasCache[categoriaSelec] || [];
+        },[ categoriaSelec, subCategoriasCache ] //<---las subcategorias se recargan o recalculan cuando o cambio de foco de categoria ppal y cambia variable categoriaSelec o cuando el objeto de subCategoriasCache ha cambiado (por haber cambiado de categ.principal y meter en el mismo las nuevas subcategorias q no exisitan almacenadas por el efecto)
+    )
+        
+    useEffect(
+        ()=>{  
+            //el efecto ahora solo sirve para actualizar las subcategorias q hay en la cache, no para cargar directamente las subcategorias y pintarlas, estableciendo una variable del state subcategorias como teniamos antes
+            //necesito invocar servicio restTienda para recuperar subcategorias de la categoria seleccionada....siempre y cuando no esten en el objeto se subcategoriasCache
+
+            //funcion q se ejecuta para recuperar laas subcategorias 1º nivel de una categoria prinvipal
+            if (categoriaSelec && ! subCategoriasCache[categoriaSelec]) {
+                restTienda.DevolverCategorias(
+                                            { 
+                                                request:null,
+                                                subcats:{//params:{ 
+                                                    pathCategoria: categoriaSelec 
+                                                }
+                                            } 
+                                        )
+                    .then( subcategorias => { 
+                                            console.log('subcategorias recuperadas....', subcategorias);  
+                                            setSubCategoriasCache( { ...subCategoriasCache,  [categoriaSelec]: subcategorias } );                                
+                                        }
+                        )
+                    .catch( error => console.log('error al obtener subcategorias...', error) );
+                }
+        }, [categoriaSelec,subCategoriasCache]
+    )
+
+    return (
+        <header>
+            <nav className="navbar navbar-expand-lg navbar-light bg-light py-2">
+                <div className="container">
+                    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTop" aria-controls="navbarTop" aria-expanded="false" aria-label="Toggle navigation">
+                        <span className="navbar-toggler-icon"></span>
+                    </button>
+                    <div className="collapse navbar-collapse d-flex flex-row justify-content-between" id="navbarTop">
+                        <div>
+                            <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
+                            <li className="nav-item">
+
+                                {
+                                    cliente.cuenta ? 
+                                    (
+                                        <div className="dropdown">
+                                                <a className="btn btn-light btn-sm dropdown-toggle" href="/Cliente/Panel/Inicio" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    ! Hola {cliente.cuenta.email}
+                                                </a>
+
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                    <div className="card mb-3 border-light" style={{'maxWidth': '160px;'}}>
+                                                    <div class="row g-0">
+                                                        <div class="col-md-4">
+                                                            <img src={cliente.cuenta.imagenAvatar} class="img-fluid rounded-start" alt="..."/>
+                                                        </div>
+                                                        <div class="col-md-8">
+                                                        <div class="card-body">
+                                                            <h6 className="card-title">{cliente.cuenta.nombre} {cliente.cuenta.apellidos}</h6>
+                                                                <p className="card-text">
+                                                                    <Link to='/Cliente/Panel/Inicio'><span className='text-small'>Configuracion de la cuenta</span></Link>
+                                                                    <br/>
+                                                                    {/* al desconectarse el clietne debemos limpiar global-store */}
+                                                                    <Link to='/'><span className='text-small'>Desconectarse</span></Link>
+
+                                                                </p>
+                                                        </div>
+                                                        </div>
+                                                    </div>
+                                                    </div>
+                                                    </li>
+                                                    
+                                                </ul>
+                                        </div>
+
+                                        
+
+                                    )
+                                    :(
+                                        <NavLink className="nav-link" to='/Cliente/Login'>Inicio Sesion</NavLink>
+
+                                    )
+                                }
+                                </li>
+                                <li className="nav-item drop-down">
+                                    <NavLink className="nav-link drop-down-toggle" href="#"  id="ofertasEbay" role="button" data-bs-toggle="dropdown" aria-expanded="false">Ofertas de Ebay</NavLink>
+                                    <ul className="dropdown-menu" aria-labelledby="ofertasEbay">
+                                        {/*-- Aquí irían los productos de interés */}
+                                    </ul>
+
+                                </li>
+                                <li className="nav-item">
+                                    <NavLink className="nav-link" href="#sell">Ayuda</NavLink>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                        <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
+                                <li className="nav-item">
+                                    <NavLink className="nav-link" href="#dashboard">Vender</NavLink>
+                                </li>
+                                <li className="nav-item dropdown">
+                                    <NavLink className="nav-link dropdown-toggle" to="/Cliente/Panel/ListaSeguimiento" id="listaSeguimiento" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Lista de seguimiento
+                                    </NavLink>
+                                    <ul className="dropdown-menu" aria-labelledby="listaSeguimiento">
+                                        {/*-- Aquí irían los productos de interés */}
+                                    </ul>
+                                </li>
+                                <li className="nav-item dropdown">
+                                    <NavLink className="nav-link dropdown-toggle" to="/Cliente/Panel/MiEbay" id="miEbayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        MiEbay
+                                    </NavLink>
+                                    <ul className="dropdown-menu " aria-labelledby="miEbayDropdown">
+                                        <li><Link className="dropdown-item" to="#recent">Vistos recientemente</Link></li>
+                                        <li><Link className="dropdown-item" to="#bids">Pujas y ofertas</Link></li>
+                                        <li><Link className="dropdown-item" to="#watchlist">Lista de seguimiento</Link></li>
+                                        <li><Link className="dropdown-item" to="#watchlist">Historial de compras</Link></li>
+                                        <li><Link className="dropdown-item" to="#selling">En Venta</Link></li>
+                                        <li><Link className="dropdown-item" to="#selling">Busquedas guardadas</Link></li>
+                                        <li><Link className="dropdown-item" to="#selling">Vendedores guardados</Link></li>
+                                        <li><Link className="dropdown-item" to="#selling">Mi garaje</Link></li>
+                                        <li><Link className="dropdown-item" to="#selling">Mensajes</Link></li>
+                                    </ul>
+                                </li>
+                                <li className="nav-item">
+                                    <NavLink className="nav-link" href="#dashboard">Notificaciones</NavLink>
+                                </li>
+                                <li className="nav-item">
+                                    <NavLink className="nav-link" href="#cart"><i className="bi bi-cart3"></i></NavLink>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </nav>
+
+            <div className="container mt-3">
+                <div className="row align-items-center">
+                    <div className="col-auto">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/EBay_logo.svg/2560px-EBay_logo.svg.png" alt="eBay Logo" height="40"/>
+                    </div>
+                    <div className="col">
+                        <form className="d-flex">
+                            <div className="input-group">
+                                <input className="form-control form-control-borderless" type="search" placeholder="Buscar artículos"/>
+                                <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Todas las categorías</button>
+                                <ul className="dropdown-menu dropdown-menu-end">
+                                    {
+                                       /*-- Aquí irían las categorías */                                     
+                                       categorias && categorias.map(
+                                                    cate=>{//pos)=>{
+                                                        return (  
+                                                            //cuando esyoy recooriendo bucle con map te exige read q les pongas una clave q los  identifique de forma unica xq si no aparecebn wearning clave unica podemos usar indice -> pos p el _id
+                                                                <li  key={cate._id}>{/* key= pos */}
+                                                                    <Link  className='dropdown-item' to={`/Tienda/Productos/${cate._id}`}>
+                                                                        {cate.nombreCategoria}
+                                                                    </Link>
+                                                                </li>
+                                                            )
+                                                        }
+                                                    )                                       
+                                    }
+                                </ul>
+                            </div>
+                            <div>
+                                 <button className="btn btn-primary" type="submit">Buscar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                {/* navbar con categorias principales.... */}
+                <div className='row mt-3'>
+                    <nav className="navbar navbar-expand-lg bg-body-tertiary">
+                        <div className="container-fluid">
+                            <ul className="navbar-nav">
+                                {
+                                    categorias && categorias.map(
+                                      
+                                        el=>{
+                                            return <li className="nav-item"
+                                                        key={el._id}
+                                                        /*onMouseOver={ ()=> setCategoriaSelect( el.pathCategoria) }
+                                                        onMouseLeave={ ()=> setCategoriaSelect(null) }     */
+                                                        onMouseEnter={ ()=> { if(timerCats !== null) { console.log('valor de timerCats...', timerCats); window.clearTimeout(timerCats)} ; setCategoriaSelect( el.pathCategoria); } }
+                                                         onMouseLeave={ ()=> { console.log('onmouseleave de CATS....');  const _timerId=setTimeout( ()=> setCategoriaSelect(null), 5000); setTimerCats(_timerId); } }          
+                                                    >
+                                                        <Link className="nav-link active" to={`/Tienda/Productos/${el._id}`}>{el.nombreCategoria}</Link>
+                                                    </li>        
+                                        }
+                                    )
+                                }
+                            </ul>
+
+                             {/* Contenedor Subcategorías que se muestran al hacer hover sobure una categoria*/}
+                             {categoriaSelec  && (
+                                <div className="position-absolute mt-2 p-3 border rounded bg-white shadow" 
+                                        style={{
+                                            top: '100%',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            zIndex: 1000,
+                                            width: '80%', // Ajusta el ancho según sea necesario
+                                        }}
+                                        
+                                        onMouseEnter={ ()=> setCategoriaSelect(categoriaSelec) }
+                                        onMouseLeave={ ()=> setCategoriaSelect(null) }
+                                >
+                                <div className="row">
+                                    <div className="col-md-4">
+                                        <ul className="list-unstyled">
+                                        {
+                                            subcategorias && subcategorias.length > 0 ?
+                                           (
+                                                subcategorias.map( sub => (
+                                                                            <li key={sub._id}>
+                                                                                <Link to={`/Tienda/Productos/${sub._id}`} className="text-decoration-none">{sub.nombreCategoria}</Link>
+                                                                            </li>
+                                                                        )
+                                                                )
+                                            ) :
+                                            (
+                                                <li>No hay subcategorías disponibles</li>
+                                            )
+                                        }
+                                        </ul>
+
+                                    </div>
+                                    <div className="col-md-8">
+                                        <img src={categorias.find( cat=>cat.pathCategoria===categoriaSelec).imagen|| 'placeholder.jpg'} 
+                                             alt={categorias.find( cat=>cat.pathCategoria===categoriaSelec).nombreCategoria}
+                                             className='img-fluid' />
+                                    </div>
+                                   
+                                </div>
+                                </div>
+                            )}                        
+                        </div>
+                    </nav>
+                </div>
+            </div>
+        </header>
+     );
+ }
+
+ export default Header;

@@ -1,0 +1,150 @@
+ 
+ ---------------------------------------------------
+	arquitectura aplicación
+ ----------------------------------------------------
+
+       |-------------------------------------------------en nuestra maquina ----------------------------------------------------|
+
+	FRONT		  servicios_react	BACK				SERVIDOR BD
+	clientes 		||					 	mongodb-> almacenamiento datos perrsistente ej.> productos,usuarios
+	navegadores ------------------------>   servidor			(local o en la nube)
+	SPA-React <------------------------	NODEJS   
+	 miEbay 				(servicios REST) --------------->almacenamiento/recup. datos JSON
+								<------------------
+
+										 SERVIDOR BD 
+								redis Para datos temporales de alta velocidad-> abajo
+								almacenamiento/recup datos inmediatos(ram) como datos de sesión usuario
+
+ Front : usuario interectuar-> maneja la interfaz con la que los usuarios interactúan.
+ Servicios de React: Punto de enlace entre frontend y backend.Hace la comunicacion entre la app react con la app (back y front)
+ Back: lo q corre por detras es decir aquello q va a recibir los datos x parte de los clientes
+
+ ====================================
+
+ haces validaciones en el lado del clienet (navegador del clienet) el usuario escribe datos del formulario y luego hace submit 
+ lo envia al servidor con las validaciones q hayas puesto en el lado cliente
+
+ en el servidor no seria necesario, siempre hacer validacionees en el back
+
+ siempre que necesites una variable que almace un tipo de dat q se cambie por accion de un evento de usuario necesitas meterla dentro 
+ del state state-> es un almacen de datos que tiene el componente con variables q van cambiando conforme el usuario interactua con el componente
+
+ —--------------------------------------
+ state de un componente 
+ —--------------------------------------
+ el state de un componente lo forman variables q quieres interceptar ante eventos que produce el usuario sobre el componente .para manejar las variables del state
+
+ se usa el hook :useState
+
+ hook es una funcion js del paquete React  q admite determinados parrametros en funcion del hook y q da funcionalidades A TODOS  los componentes de la aplicación
+ la sintaxis de esta funcion empieza en use
+ 
+ el hook useState admite como unico parametro:
+
+	-valor constante con el q inicializar la variable del state q estas creando
+	– o un function sin parametros q debe retornar(DEVOLVER) un valor constante con el cual se inicializa la variable del sate 
+
+ este hook(funcion) ,devuelve un array de dos posiciones:
+
+	-en la posicion 0 se devuelve el valor q tienen en ese momento la variable del state (valor inicial pero si pones algo lo machaca)
+	-en la posicion 1 se devuelve una funcion setter para cambiar el valor de la variable del state (ante un evento)
+
+ se emplea (destructurando arrray)
+
+ let [ nombre_variable_state,setNombre_variable ]  = useState  ( valor_inicial | () => {...; return valor_inicial)
+ almacenas el valor inicial (o el q vair cambiando / refrescando ante el evento del usuarop
+
+
+el .test es un metido q le pasas ña vadena y te dice si cumple el patron true o false
+
+
+
+ --------18 
+ variables internas en una función con una _ al principio para no confundirlas con variables o con propiedades del state
+
+ useState obj 
+ crear obj antes de  validar  
+ [ mivalor, SetMiValor ] = useState ( { nombre: ‘ ‘ ,apellidos:’ ‘ , email: ‘ ‘ ,password:’ ’})
+
+ del campo nombre a parte de los valores me interesa tmb su estado de validacion el mensaje y los posibles criterios que tiene para validar … parra los demas campos tmb apellido,email,password... 
+
+ el obj  se almacena en la variable mivalor
+
+ en la FORMA 1 cada prop del campo tiene su satate individual (uno para el valor, otro para la validación, 
+ y otro para el mensaje de error.)
+
+ cuando quiero modificar con setMiValor  el obj es más complicado
+ xq tienes que modificar la propiedad de un obj dejando al resto como esta por eso se usan los tres … 
+ los tres puntos es copia el obj como estaba me lo pegas aquí y modificame esta propiedad (machaca  la q tu quieras )
+
+ Forma 2
+ liego en vez de tener tantas variables por cada campo edl formulario es mejor tener solo un estado(useState) x cada
+ campo del  fromulario en vez de varios estasdos x cada propiedad del campo (como el valor, el estado de validación y el mensaje de error), 
+ se encapsulan dentro de un obj 
+ 
+  let [campoNombre, setCampoNombre] = useState({valor:cuenta.nombre,estadoValidacion:false,mensajeError:''});
+  let [campoApellido, setCampoApellido] = useState({valor:cuenta.apellidos,estadoValidacion:false,mensajeError:''});
+  let [campoEmail, setCampoEmail] = useState({valor:cuenta.email, estadoValidacion:false, mensajeError:''});
+  let [campoPassword, setCampoPassword ] = useState({valor:cuenta.paassword, estadoValidacion:false, mensajeError:''});
+ 
+ej pa entendeer del nombre 
+
+
+    function ValidaNombre(ev){
+
+        let _estadoValidacionNombre = false;
+        let _mensajeError = '';
+
+        // Validaciones
+        if (campoNombre.valor.trim() === '') {
+            _estadoValidacionNombre = false; // El nombre no puede estar vacío
+            _mensajeError = '* Nombre obligatorio';
+        } else if (campoNombre.valor.length > 150) {
+            _estadoValidacionNombre = false; // El nombre no debe exceder los 150 caracteres
+            _mensajeError = '* Nombre no debe exceder de 150 caracteres.';
+        } else if (!/^([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)?$/.test(campoNombre.valor)) {
+            _estadoValidacionNombre = false; // El nombre debe seguir el patrón especificado
+            _mensajeError = '* El apellido solo puede contener letras(mayusculas y minuscilas) y espacios, y debe comenzar con mayúscula.';
+        }
+
+        // Actualizamos el estado con la validación final 
+        if (_estadoValidacionNombre){
+            setCampoNombre({
+                ...campoNombre,//tomas los valores acruales campoNombre y los amntiene en el nuevo obj
+                estadoValidacion:true,
+                _mensajeError:''
+            })
+        }else{
+            setCampoNombre( {...campoNombre, estadoValidacion: false, mensajeError: _mensajeError} );
+        }
+     }
+
+ return(
+          input type="text"
+          id='txtNombre'
+          className="form-control form-element"
+          placeholder="Nombre"
+          /* forma 1 onChange={ (ev) => {setNombre(ev.target.value);console.log('actualizando state nombre a ',ev.target.value)}} */ 
+          // forma 2 
+          onChange={ (ev) => setCampoNombre( {...campoNombre, valor:ev.target.value}) }
+          //forma 1 y 2 
+          onBlur= {ValidaNombre}                                                            
+          />
+          {/* Mostrar mensaje de error para el campo nombre */}
+          {/*estadoValidacionNombre === false && <span className='text-danger'>{mensajeErrorNombre} </span>**/}
+          <label htmlFor='txtNombre' className='floating-label'>Nombre</label>
+          {!campoNombre.estadoValidacion &&  <span  className="text-danger">{campoNombre.mensajeError}</span>}
+          </div>
+
+ )
+
+ o todo en un solo obj 
+ 
+ [ mivalor, SetMiValor ] = useState ( { 
+  nombre: {  valor : ‘ ‘ ,valido: ‘ ‘ , validaciones: [ ] ,mensaje: ‘ ‘ } , 
+  apellido :   {  valor : ‘ ‘ ,valido: ‘ ‘ , validaciones: [ ] ,mensaje: ‘ ‘ } ,
+  email :  {  valor : ‘ ‘ ,valido: ‘ ‘ , validaciones: [ ] ,mensaje: ‘ ‘ }  , 
+  password : {  valor : ‘ ‘ ,valido: ‘ ‘ , validaciones: [ ] ,mensaje: ‘ ‘ }  
+ })
+

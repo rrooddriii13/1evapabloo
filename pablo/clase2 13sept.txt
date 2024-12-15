@@ -1,0 +1,181 @@
+
+ reglas de codificación de JSX (mezcla de html + javascript)
+ -----------------------------------------------------------
+ - todos los tags deben tener su correspondiente etiqueta de cierre (no puede quedar ningún tag abierto)
+ - cuando quieres incluir codigo javascript (mostrar contenido de una variable,llamar a una funcion manejadora de un evento,...)
+ siempre va entre llaves:
+
+	return (
+		//pones el stilo classname o con varibales  se pueden aplicar o estilos infivializados formato obj xcomo abajao una o otra
+		<div className={variable_javascript}  style={ variable_javascript | { propestilo: valor, propestilo: valor, ...} }
+		{
+			...código javascript(entre las {})
+		}
+
+	)
+
+
+ - IMPORTANTE: en el return solo se puede devolver un elemento html unico, no puedes devolver varios elementos a la vez,
+ si necesitas devolver varios los englobas en un elemento raiz, q puede ser un <div> o un elemento plantilla q ofrece react:  <>...</>
+ es decir si vas a devolver ej h2 y div ps ese codigo va entre <> </> q asi os englobas
+
+
+	return (
+			<div ...> ...</div> <--------- esto esta mal, debes englobarlo en un unico elemento: todos en un div o template <> </>
+			<form>...</form>				<>
+			<button>...</button>					<div...>
+										...
+		)							</>
+
+ - dentro del cod javascript de JSK no puedes usar bloques: ni if ,..else ni for -> xq	 haces if y abres llaves el cree q esas llaves es un bloque total de js de todo el cod jsx
+ si quieres poner condicionales tienes q usar el operador ternario:
+
+	return (
+		<>
+			<div...> .. </div>
+			{				
+				if(tipocuenta == 'personal) { <===== esto kaska:ren el momento q abro { casca te dicce esto es un bloque ya de js q t		tipocuenta == 'personal' ? (
+				...			      <== que ya tienes aqui el { de arriba del if 						....
+				} else {									) : (
+					....										....
+				}											)
+			}
+			  <footer...> </footer>
+		</>
+	)
+
+
+ -- asi bn if con operacion ternario o operador &&
+	return (
+		<>
+			<div...> .. </div>
+			{				
+				tipocuenta == 'personal' ? (
+							.... todos los elementos q quieres poner si la variable es true
+							      ) : (
+							    	....
+							       )
+														
+			}
+			  <footer...> </footer>
+		</>
+	)
+
+ si quieres poner condicion simple if(un if)  ..... se usa el operador && 
+	return (
+		  <>
+			{
+				tipocuenta == 'personal' && ( ... ) {/* si es cuenta y ms ejk visible = true lo hace sin else */}
+			}
+		  </>		
+		)
+
+
+
+ si quieres usar bucles for... tienes q usar el metodo .map() de la "clase" array de javascript -> map (3 parametros) -> 1elemento actual del array  ,2posicion/indice,3-> array  sobre le ccual estas iterando
+	
+	return (
+		<>
+			<div...>..</div>
+			{			   
+				arrayproductos.map((el,pos,arr)=>{ 
+					.... 
+				})
+			}
+		</>
+		)
+
+
+ probarlo 
+ en ebay.es
+ te vas a console y lo creas 
+let miarray=[
+     {nombre:'pablo',edad:15},
+     {nombre:'mariluz',edad:56},
+     {nombre:'pepe',edad:28}
+  ]
+ quiero transformar este obj en otro array y q coga la propiedad nombre y la ponag aen mayuscula
+ miarray.map((elem) =>{
+     return elem.nombre.toUpperCase();
+ })
+
+ quiero los mismos obj con la propiedad nombre salga en mayusculas
+
+ miarray.map((elem,pos,array) =>{
+     return {						-> devuelve -> {nombre: 'PABLO', edad: 15}
+         nombre :elem.nombre.toUpperCase(),			       {nombre: 'MARILUZ', edad: 56}
+         edad:elem.edad,						       {nombre: 'PEPE', edad: 28}
+         }
+ })
+
+
+ ahora de este 
+
+ let cliente1={nombre:'pablo',apellido:'lios',edad:52,casado:false,nif:'123123123A' }
+ 
+ como tienes tantas y solo quieres mofificar una  pues lo que se gace es que se desestructura q es 
+ apuntes discord -> https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+
+ si tengo q crear variasbles x cada una de las variablñes memurot entonces se desectrura tiene q coindifit el nombre de la variable con el nombre de la propiedad  del obj 
+ desescruturacion de un obj es dividirlo en variables independendienets en funcion de las propiedades q tiene 
+ y en un array  es dividirlo en variables independendienets segun la posicion que tiene 
+ 
+ ahora de este obj quiero tener la edad y nif en variables indefendientes y el resto del obj las propiedades restantess del obj
+
+ desesctructuro -> let {edad,nif, ...resto}=cliente1
+ edad->52
+ nif->'123123123A'
+ resto ->{nombre: 'pablo', apellido: 'lios', casado: false}
+
+ esro hace lo mismo -> los ... devuelve el obj y y como nombre la creas debajo  machaca la propiedad nombre con el nuevo valor
+ miarray.map((elem,pos,ar) => {	
+    return {						-> devuelve -> {nombre: 'PABLO', edad: 15}
+ 	    ...elem,						       {nombre: 'PABLO', edad: 15}
+            nombre: elem.nombre.toUpperCase(),
+   };
+ });
+
+
+
+ //ternario en consola 
+ let tipocuenta='personal'
+
+ if(tipocuenta=='personal'){
+  	console.log('registro personal ')
+ }else {
+ 	console.log('registro empresa')
+ }
+
+ devuelve -> registro personal 
+ 
+ para js 
+ tipocuenta='personal' ? console.log('registro personal ') : console.log('registro empresa')
+ devuelve -> registro personal 
+
+
+
+ en zonacliente creamos directorio loginComponent  y registroComponent-> Registro.js y Registro.css
+
+
+
+
+ propiedades de un componente ->     //cuanfo quieres pasar valores aun componente usando atributos esos atributos se recogen en el obj props
+ 
+ ----------------------------
+ cuando quieres pasar valores a un componente en forma de atributos, se usa el objeto props:
+
+	<NombreComponente atributo1=valor  atributo2=valor .... />
+			  ---------------------------------------
+					\
+			estos atributos REACT los mapea contra un objeto llamado "props" q recoje
+			como parametro de la funcion q define el componente
+
+				function NombreComponente( props ) {
+				...
+
+			en props hay un objeto js con este formato:  { atributo1: valor, atributo2: valor, ...}
+
+
+ en la etiqueta form hay un action q es get o post 
+ get -> se  mandan datos en la url
+ post -> se mandba ppro post x defecto en formulario

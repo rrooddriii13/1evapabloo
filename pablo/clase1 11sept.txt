@@ -1,0 +1,152 @@
+
+ ---------------------------------------------------
+	arquitectura aplicación
+ ----------------------------------------------------
+ 
+       |-------------------------------------------------en nuestra maquina ----------------------------------------------------|
+
+	FRONT		  servicios_react	BACK				SERVIDOR BD
+	clientes 		||					 	mongodb-> almacenamiento datos perrsistente ej.> productos,usuarios
+	navegadores ------------------------>   servidor			(local o en la nube)
+	SPA-React <------------------------	NODEJS   
+	 miEbay 				(servicios REST) --------------->almacenamiento/recup. datos JSON
+								<------------------
+
+										 SERVIDOR BD 
+						redis Para datos temporales de alta velocidad-> abajo
+						almacenamiento/recup datos inmediatos(ram) como datos de sesión usuario
+
+ Front : usuario interectuar-> maneja la interfaz con la que los usuarios interactúan.
+ Servicios de React: Punto de enlace entre frontend y backend.Hace la comunicacion entre la app react con la app (back y front)
+ Back: lo q corre por detras es decir aquello q va a recibir los datos x parte de los clientes
+
+ ====================================
+ aplicación SPA (Single-Access-Page) -> los clientes hacen una solo una peticion se descargan todo el portal y trabaja la carga el navegador -> ya no es peticion,respuesta,peticion respuyesta...  cunaosd quieren algo del servidor hacen microllamaddas
+ creada con React -> los clientes van a cargar en sus navegadres la app spa creada con react ,esta en el servidor local 
+ (localhost) el cliente la desscarga y una vez q se descarga se ejecuta entera en el navegador del cliente
+
+ cuando el cliente quiere almacenar o solicitar datos a un back hace llamadas a servicios no es todo el rato llamada 
+ respuesta llamada respuesta es solo de forma puntual oye dame esto toma ya no escomo antes
+ ====================================
+ en cualquier aplicación SPA solo hay una UNICA pagina html (index.html)
+ en esta pagina html se crea un ARBOL DE COMPONENTES, hay un componente(principal) raíz o "root"   					:extra> y de ese componente principal se van difulcando(dividiendo)el resto de componenetes  y se van sustituytendo en funcion de la pag q quieras pintar quito esto o pondgo esdtoy se van remplazando unos por otros
+ del que cuelgan el resto y se van quitando/poniendo en función de la url q ponga el usuario(cliente) en el navegador
+
+ hay un modulo de enrutamineto q mapea url con componentes-> esta url esta completa rash lo cargo aqui
+
+ el reemplazo de componentes en el arbol en función de la url lo hace un modulo (modulo enrutamiento)
+ q carga un componente u otro en el arbol
+
+ UN COMPONENTE puede ser toda la pag entera pueder ser un boton o una caja de texto ,se pueden anidar 
+
+
+ la app react solo tiene un index.html y en ese index carga un componente app Root componente raiz  y apartir de ahi carga lo q quieras
+ npm es (Node Package Manager) es el gestor de paquetes para Node.js
+ para ver si tienes node -> node -- version te dice la version q tienes intalada
+ 
+ Para crear proyecto en react:
+
+	cd directorio_contenedor
+	npm install -g create-react-app
+	npx create-react-app miebay <--------- instalado nodejs, para q la herramienta npm exista
+	---------------------------
+			\----> npx es un alias de:  npm exec 
+				 y ejecuta el paquete create-react-app
+
+
+
+ estructura de un proyecto react
+ ===============================
+ - directorios:
+	 node_modules <----------directorio de paquetes instalados (paquetes externos, ej paq para hashear string etc...)
+					para instalar todos los paquetes aquí definidos, están referenciados en el fichero: package.json
+					para restaurar:  npm install
+	 
+	 public <------ almacenar contenido estatico de la aplicacion:  imágenes, css de aplicación global,y el unico html q hay ...(se aplica ese estilo a todos componentes o puede tener estilos individuales) robots.txt->es para indexar en buscadores ,tu portal para indexar ,GOOGle,bling 
+	 src <--------- directorio IMPORTANTISIMO, directorio del código fuente de react:
+			como norma:
+				directorio componentes: ficheros .jsx que definen componentes de la aplicacion
+				directorio servicios: ficheros .js que definen servicios comunicación del front de react con el back de nodejs
+				directorio hooks_personalizados: funciones globales internas usadas por todos los componentes
+				con forme q veamos mas cosas pues mas ...
+			
+ hook -> funcion en javascript q le pasas parametros ty te devuelve
+ portales -> dividivo 
+ zona cliente -> donde aparace el dashboard el panel del cliente (modificar datos personales...) login, registro
+ zona portal o zona tienda -> la pagina principal ,los articulos top mas vistos,apuntos de expirar
+ en componentes creo dos directorios zonaCliente y zonaPortal
+
+
+ ==================
+ componentes REACT -> cada componente es un fichero js,formado por una funcion javascript q devuelve codigo jsx nombre fun = nombre compontte
+  ==================
+ es la unidad básica dentro de un proyecto de react (como en cualquier spa); un componente se mete en un fichero con extension .js (JAVASCRIPT + HTML)
+ cada fichero .js esta formado por:
+
+	+---------componente = función javascript que devuelve codigo js -------------------------+
+		PROPS <------------ variables o valores que recibe el componente desde el componente padre que tiene en el arbol
+
+		STATE <-------- variables internas al componente, que cambian por la iteraccion(accion) del usuario sobre el componente atraves de eventos
+				(es DINAMICO) cada cambio en una variable del state supone un refresco(actualizacion) o RENDERIZACION del componente (y de 
+				los q cuelgan por arriba)
+		codigo-funcional <----- código JavaScript encapsulado dentro del componente, solo accesible por el para defifinir variables, funciones,...-> para hacer calculos internos del componerte
+
+		return codigo-JSX <---- OBLIGATORIO!!! es la vista (Interfaz Grafica) del componente, mezcla de código html, css y código javascript -> es lo q devuelve
+		JSX permite intercalar HTML con código JavaScript utilizando llaves {} 
+	+-----------------------------------------------------------------------------------------+
+
+
+ ej: en carpeta src ---> componente raíz App.js
+ 
+ import logo from './logo.svg';
+ import './App.css'; <----------------------- fichero donde se definen estilos para el componente, podría haberlos definido uno a uno en variables locales
+					 dentro de la función, p.e para el estilo App:
+
+						let estiloApp={
+							textAlign: 'center'	
+						}
+					y luego en el div del código jsx poner:
+						<div className={estiloApp}>
+
+ function App() { 
+   return ( <--------------------------------- código jsx, lo q hay entre { .. } es código JavaScript, en este caso variables
+     <div className="App">
+       <header className="App-header">
+         <img src={logo} className="App-logo" alt="logo" /> -->el logo es como crear una especie de vaRIABLE DONDE VA EL CONTENIDO DE LA IMAGEN 
+         <p>
+           Edit <code>src/App.js</code> and save to reload.
+         </p>
+         <a
+           className="App-link"
+           href="https://reactjs.org/"
+           target="_blank"
+           rel="noopener noreferrer"
+         >
+           Learn React
+         </a>
+       </header>
+     </div>
+   );
+ }
+
+ export default App;
+
+ en vez de class className
+
+ el componente, se incrusta o renderiza dentro del div id="root" que tiene la unica pagina, index.html gracias al script q se ejecuta nada mas cargar la pagina: index.js
+ 
+ const root = ReactDOM.createRoot(document.getElementById('root'));
+	     -----------------------------------------------------> define contenedor para incrustar comp.raiz del arbol de componentes, seleccionando
+									el elemento del DOM para hacerlo, el div con id="root" 
+
+ root.render( --------------------> en ese contenedor, almacenado en variable "root" de JavaScript renderiza el componente <App/> definido arriba
+   <React.StrictMode>
+     <App />
+   </React.StrictMode>
+ );
+
+ ReactDOM.createRoot: Obtiene el elemento HTML con id="root" y lo convierte en el contenedor raíz de la aplicación.
+ root.render: Este método inserta el componente <App /> en el DOM dentro de <div id="root">, 
+ usando <React.StrictMode> para ayudar en la detección de problemas potenciales durante el desarrollo.*/
+
+

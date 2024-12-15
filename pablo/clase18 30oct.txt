@@ -1,0 +1,250 @@
+   ----------------------------------------
+   comunicacion entre componentes:
+   -paso del state (prop drilling)  componente padre-componente hijo
+   - state global para todos los componentes:
+	redux
+	context-Api
+	Tanstack react-query (rtk)
+	Zustand -> la q vvamos a usar
+---------------------------------------------
+
+
+   cuando el usuario  q quiera hacer uso deel portal pujas ,tienda y tal q se regisdtre 
+   y una vez se registre ya pueda para q  quede rastro de su paso y lo q hace
+   
+  el componente de compras necesita los jwt para sber q el usuario esta logeado
+
+  si no tienes token no te dejo no hay relacion directa de ese componente colon el login necesitas definirte
+  un estado global  donde tu metes el conjunto de vaklores q gte interesa para que todos los componmentes tengan accesso a el 
+
+
+  antes de comprar un producto  cuando le de a comprar te exige logearte 
+  cuando confirmas pagar tenemos q mandar a nuestro servicio de node los jwt de acccesoo y comprobar q son validos 
+  y esos jwt estaran almacenado en el state global
+
+
+ ---------------------------------------------
+ -paso del satate (propiedad DRILLING) componente padre - componente hijo 
+
+        -------------------------------------
+	    	          |
+     		componente padre (Login.js) <==== estado objeto {email, password}
+	   	          |		     const [loginCuenta, setLoginCuenta] = useState ({email:'',passwd:''})
+     + ----------------------------------------------+
+     |			                             |
+ componete hijo (email.js)		   componente hijo(Password.js)
+	||					     ||
+este comp. hijo solo quiere hacer		este comp. hijo solo quiere hacer uso del state del comp.padre 
+uso del state del comp padre para		para modificar la  propiedad password
+modificar la propiedades email
+
+
+ la forma q tiene el componente padre q el componente hijo  haga uso de su state es hacer un propery es decir
+ meter el state en propiedades y pasarselo al hijo
+
+  estos compo hijos como tienen acceso al state del padre el comp de padre necesita pasarle la funcion seter
+  ej (setLoginCuenta) como  una propiedad
+
+
+  ¿como lo hacen ? -> el comp.padre pasa alos comp.hijps como propiedades las variables del state q le interesen
+   
+  propiedad DRILLING
+
+  function Login() {
+           const [loginCuenta, setLoginCuenta] = useState ({email:'',passwd:''})
+	  ....
+           return (
+		  <Email modificarEmail={setLoginCuenta}> </Email>
+		  <Password modificarPassword={setLoginCuenta n } > </Password>
+
+	  )
+}
+  modificarEmail={setLoginCuenta}.> con eso solo modica la prop emailç
+
+
+  cuando quieres q mas componetes uusen ese state  ps se hace el state global 
+
+ -STATE GLOBAL : para evitar el problema de ir pasando en cascada de componente en componente el state de un componente padre
+  a otros hijos (cuando muchas veces no lo van a usar),surgio la necesidad de crear un STATE GLOBAL
+
+ 
+  en el state global vamos a meter todad las variables,funcion lo q quieras q manejen todos los (Arbol) componentes
+  y se fefine sienmpre en el componente raiz (App.js) 
+
+  https://zustand.docs.pmnd.rs/getting-started/introduction
+
+
+ instalamos zustand -> npm install zustand --save   (en react )
+
+ luego crearnos un store _> store (almacen donde metes conjuntio de variables,funciones ...  q quiieres q usen los componnentes 
+ de forma global (state global) para ello usamos funcion create 
+
+  create() -> devuelve  como una funcion para crear un  store vacio y ahi dentro de la fncion es donde metes todo el conjuntos
+  de variables q quieres creas 
+
+  https://zustand.docs.pmnd.rs/apis/create
+
+
+   usamos la funcion:
+ 
+   import { create } from 'zustand'
+   ...
+   const _storeGlobal = create (funcion_Creadora_Store)
+				----------------------
+					  |
+	como unico parametro la funcion create recibe a su vez una funcion q define
+	los valores del state. Esta funcion tiene 3 posibles parametros:
+	-set: parametro q es una funcion para cambiar/modificar los valores del store (como un setter)
+	-get: parametro q es una funcion para recuperar un valor del store
+	-store: parametro q es un obj con todos los valores del store q tienes definidp 
+
+	(set,get,store) => {
+		
+		//aqui dentro se definen las variables del store o valores 
+	}
+
+ 	lo q devuelve la funcion create en vd es un hook -> 
+	hook-> func js q te permite hacer 
+        como lo tienen q manejar de forma global todos los componentes recordais q los hook lo manejaban de forma global 
+        cualquier componente ps x eso la funcion create devuelcve un hokk
+ 
+ 	en realidad es un hook para manejar el store -> se deberia llamar asi lo q devuelve 
+
+  
+    const useStoreGlobal = create (funcion_Creadora_Store)
+ 	
+   la funcion create(...)  devuelve un HOOK!!!, con este hokk TODOS LOS COMPONENTES TENDRAN ACCESO
+   al state global definido en el store dentro de la funcion create 
+
+
+   ej-> en componente App.js
+
+	const  useStoreGlobal = create(
+				       (set,get,store)=> {
+					return{   cada comp recibe todo esto de auqi dentro atraves del hook (useStoreGLobal)
+					 el obj q devuelve esta funcin es el obj q quieres meter en el store (state global)		 
+ 					  METES LO Q te interesa almacenar tabnto funciones como propiedades
+					 
+					  accessToken:'',
+					  refreshToken:'',
+					  cuentaCliente: {email:'',idCliente:''},
+					  
+					 una funcion q permite 
+					 ej en el login  cuando me venga de vuelta los token de acceso el Login va hacer uso 
+					 de esta funcion q es global y va a meter en el accesToken el accestpoken 
+					  setAccessToken: (jwt)=> set( {...store,accessToken:jwt})
+					
+					
+ 	 			       }
+				)	
+
+
+  ¿Como lo usa un componente ? usando ese hook:
+
+  componente ComprarProducto.js
+ 	
+	quiere usar accestoken xq lo necesita enciar
+	const accessToken = useStore( (state) => state.accessToken )
+	state -> tiene todo el return fel useStoreGLobal 
+  
+
+   
+ graficamente:
+
+      	create :
+		mediante la funcion (set,get,store): crea el almacen de abajo  q dentro puedes usar set get y store si no lo pones nopadds
+	+------------------------------------------+
+       	|   aqui dentro puedes usar:set,get,store  |   si quiro acceder al almacen global desde otros componentes 
+	|					   |
+	|   accessToken :'',			   |		  |-> comp.Header.js-> necesita acceder al store para obtener el email de la cuenta 
+	|   refreshToken :'',			   |		  | como ¿?-> usando hookAcceso recupera la propiedad cuenta q necesita el nick
+	|   cuenta:{ ... },			   | <------------|
+	|   setAccessToken=( jwt )=>...		   | te da un     |
+	|   ....				   |  hookAcceso  |-> comp.ComprarProducto.js-> necesita acceso para obtener accessToken 
+	+------------------------------------------+		  | usando el hookAcesso recupera la propiedad accessTokem 
+
+   tmb funciones para modificar estos valores xq sino soo lectira 
+
+    este  state global lo define la funcion q hemos puesto arriba
+
+
+  crear cuenta en stripe para hacer pago _> https://stripe.com/es
+
+   correo: pepitodawa1@gmail.com
+   contra ->rodrigorok01?
+ 
+  usar modo prueba q tiene modo testeo
+
+
+
+
+  vas a desarolladores al primero 
+
+ en claves de api  coges y pegas la clave publica
+ pk_test_51QFgCHA8uI3kpm3Sz3CQ58yrWuUidVQrSyEyG8sLF5d8WmZzCfrjiMqHMYbvTFFqUgHzPx5lYuAjb1NK4i56DCN300ZUg1eYMf
+
+
+
+  en .env .> STRIPE_API_KEY= y lo metes
+
+
+   la idea es  cuando demos finalizar compraa o compra ya  usando  servicio restTienda hacemos peticion al servicio de node 
+   el servicio tienen q invokar un servicio xterno -> ke pasas datos  cantidad quieres cobrar q tarjeta quieres cobrar y usuario 
+    ...
+   
+  cliente react			             servicio NODE.js
+  comp.ComprarProducto.js		   servicio rest Gateway			servicio API de stripe
+        ||	
+     restTienda ----------------------------> server.js  
+			accessToken           endpoint:ComprarProducto ==================> cantidad,tarjeta,usuario								
+  
+  
+  el cliente react te manda el accesstoken  cuando te lo ha ha mandado si tu lo has firmado si verificas 
+ puedes extraer el payload y enn el payload va la info del cliente va el email el id 
+ lo q quieras meter recuperas de lqa bdd lo q quiera
+ en el payload puedes meter los datos q q uieras
+
+
+
+    Servicios rest Gateway.>es un servicio q va a llamar a otro (servicio intermediario par llmar a otro servicio)
+    cuando un servicio hace de intermediario de otro de llamdas a otros servicios (entre cliente y otros servicios)
+    ej.>> nuestro servicio de  node ya ha hecho intermediario de google y ahora de stripe pero tambien sera de paypal ...
+    
+
+   como es un servicio api como hicimos q con ajax -> node invoca a otro servio usando httpRequest mediante axios 
+
+   hay dos formas de hacerlo  node tr da un psaquete q lo crea stripe 
+   si quieres mas potencia y usar directamente la api q te da striope tiebnes q hacer peticiones tuyas personalizadas
+   
+
+  con el paquete es instalar el paquiete y usar metodos del paquete 
+  usando la api a modo profesional -> la q vamos a usar
+ 
+  creamos en servicios (node) -> stripeService.js
+
+  en node_js npm install axios --save
+ https://docs.stripe.com/api
+ https://docs.stripe.com/api/customers
+ https://docs.stripe.com/api/customers/create
+
+  defino los metodos q tengo qpero lo tengo q inviocar desde un endpoint
+
+
+
+  https://www.npmjs.com/package/axios 
+  axios es como un fecht api mejorada pa q sea mas facil de usar
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+

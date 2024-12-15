@@ -1,0 +1,98 @@
+ 
+ ---------------------------------------------------
+	arquitectura aplicación
+ ----------------------------------------------------
+
+       |-------------------------------------------------en nuestra maquina ----------------------------------------------------|
+
+	FRONT		  servicios_react	BACK				SERVIDOR BD
+	clientes 		||					 	mongodb-> almacenamiento datos perrsistente ej.> productos,usuarios
+	navegadores ------------------------>   servidor			(local o en la nube)
+	SPA-React <------------------------	NODEJS   
+	 miEbay 				(servicios REST) --------------->almacenamiento/recup. datos JSON
+								<------------------
+
+										 SERVIDOR BD 
+								redis Para datos temporales de alta velocidad-> abajo
+								almacenamiento/recup datos inmediatos(ram) como datos de sesión usuario
+
+ Front : usuario interectuar-> maneja la interfaz con la que los usuarios interactúan.
+ Servicios de React: Punto de enlace entre frontend y backend.Hace la comunicacion entre la app react con la app (back y front)
+ Back: lo q corre por detras es decir aquello q va a recibir los datos x parte de los clientes
+
+ ====================================
+
+ --19 
+    //FORMA 3 mas reducida -> 
+    //todo... voy a crear en el state del componente un unico objeto para recoger y validar todos los campos del formulario
+    //! -este objeto tiene como propiedades los campos del formulario :nombre,apellidos,email , password
+    //! -dentro de cada propiedad voy a meter un objeto q represente valores del campo del input del formulario (es como un obj anidado)
+    //!     -valor caja de texto,validaciones,mensaje de error a mostrar ,estaaado de validacion
+
+ o todo en un solo obj 
+ 
+ [ mivalor, SetMiValor ] = useState ( { 
+  nombre: {  valor : ‘ ‘ ,valido: ‘ ‘ , validaciones: [ ] ,mensaje: ‘ ‘ } , 
+  apellido :   {  valor : ‘ ‘ ,valido: ‘ ‘ , validaciones: [ ] ,mensaje: ‘ ‘ } ,
+  email :  {  valor : ‘ ‘ ,valido: ‘ ‘ , validaciones: [ ] ,mensaje: ‘ ‘ }  , 
+  password : {  valor : ‘ ‘ ,valido: ‘ ‘ , validaciones: [ ] ,mensaje: ‘ ‘ }  
+ })
+
+
+ const [ formData, setFormData ] = useState(
+        {
+            nombre: { //?  <-----------propiedad q se mapea contra campo input-nombre
+                valor: '' , // <-----propiedad de "nombre" a modificar en evento onChange del input
+                valido: false, //<----propiedad de "nombre" q define estado de validacion del contenido del input-nombre(campo nombre)
+                validaciones: { //<-------propiedad de "nombre" con las validaciones a hacer sobre el input-nombre es un obj con todo el conjunto  de validaciones a hacer sobre el input nombre
+                    obligatorio: [true, '* Nombre obligatorio'], //valor q tienen q tener uy mensaje de errror si no lo cumple
+                    maximaLongitud: [ 150 , '* Nombre no debe exceder de 150 caracteres'],//num max caracteres y mensaje si no lo cumple
+                    patron: [!/^([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)?$/,  '* Formato invalido de nombre, letras y espacios y la 1 en mayuscula ej : Nuria Roca' ]
+                },                
+                mensajeValidacion : '',//<---propiedad de "nombre " con el mensaje de error procedente de las validaciones a hacer sobre input-nombre
+            },
+            apellidos: { //?  <-----------propiedad q se mapea contra campo input-apellidos
+                valor: '' , // <-----propiedad de "apellidos" a modificar en evento onChange del input
+                valido: false, //<----propiedad de "apellidos" q define estado de validacion del contenido del input-nombre(campo nombre)
+                validaciones: { //<-------propiedad de "apellidos" con las validaciones a hacer sobre el inputapellido es un obj con todo el conjunto  de validaciones a hacer sobre el input apellido y si nio se cumplen el mensaje de rroes
+                    obligatorio: [true, '* Apellidos obligatorio'], //valor q tienen q tener uy mensaje de errror si no lo cumple
+                    maximaLongitud: [ 250 , '* Los Apellidos no debe exceder de 250 caracteres'],//num max caracteres y mensaje si no lo cumple
+                    patron: [!/^([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)?$/,  '* Formato invalido de Apellidos, letras y espacios y la 1 en mayuscula ej : Perez Roca' ]
+                },                
+                mensajeValidacion : '',//<---propiedad de "nombre " con el mensaje de error procedente de las validaciones a hacer sobre input-nombre
+            },
+            email:{ //?  <-----------propiedad q se mapea contra campo input-email
+                valor: '' , // <-----propiedad de "email" a modificar en evento onChange del input
+                valido: false, //<----propiedad de "email" q define estado de validacion del contenido del input-nombre(campo nombre)
+                validaciones: {  //<-------propiedad de "email" con las validaciones sobre el email q si no se cumple muestra el error
+                    obligatorio: [true, '* email obligatorio'], 
+                    patron: [/^.+@(hotmail|gmail|yahoo|msn)\.[a-z]{2,3}$/,  '* Formato invalido de email (cualquier caracter(num o ltras ),hotmail/gmail/yahoo/msn .min2 y max4 ) -> mio@hotmail.es']
+                },                
+                mensajeValidacion : '',//<---propiedad de "nombre " con el mensaje de error procedente de las validaciones a hacer sobre input-nombre
+            },
+            password : {  //?  <-----------propiedad q se mapea contra campo input-password
+                valor: '' , // <-----propiedad de "nombre" a modificar en evento onChange del input
+                valido: false, //<----propiedad de "password" q define estado de validacion del contenido del input-nombre(campo nombre)
+                validaciones: { //<-------propiedad de "password" con las validaciones sobre la cotraseña q si no se cumple muestra el error
+                    obligatorio: [true, '* Password obligatoria'],
+                    minimaLongitud: [ 8 , ' * La contraseña debe tener al menos 8 caracteres '],
+                    patron: [!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?¿¡/#$%&])[\S]{8,}$/, '*La contraseña debe tener al menos una mayúscula, una minúscula, un dígito y un símbolo raro(! ? ¿ ¡ / # $ % & ) y sin espacios' ]
+                },                
+                mensajeValidacion : '',//<---propiedad de "password " con el mensaje de error procedente de las validaciones a hacer rn rl input password
+            }
+        }
+    ) 
+
+ siempre para acceder/modificar algun campo/propiedad-> sienmpre volver a pasar todo el obj y ahora modificas
+ como nombre esd un obj tengo q copiar el obj anterior y luego modifico-> ej _>  ,nombre : {formData.nombre,(aqui modifico la prop q quiera)valor:ev.target.value}
+ 
+ para modificar el nombte
+ onChange={ (ev) => setFormData({...formData,nombre: {...formData.nombre,valor:ev.target.value}})}
+ onChange={(ev) => setFormData({...formData,apellidos:{...formData.apellidos,valor: ev.target.value}})}
+ onChange={ (ev) => setFormData({...formData,email :{ ...formData.email,valor:ev.target.value}})}
+ onChange={ (ev) => setFormData({...formData,password:{...formData.password , valor: ev.target.value }})}
+
+ onChange-> mientras estas escribiendo
+ onBlur.> cuando te sales de la caja 
+
+ en onBlur = un metodo para todos los input

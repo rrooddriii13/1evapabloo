@@ -1,0 +1,299 @@
+
+----------------------------------------------
+     tokens de sesión JWT (Json-Web-Token)
+
+     usados en servicios REST-API (stateless)-> Se usan para mantener la sesión del usuario de forma "sin estado" (stateless), 
+     lo que significa que el servidor no almacena datos de sesión de cada usuario conectado. 
+     En lugar de esto, cada usuario tiene un token (JWT) que contiene su información de autenticación.
+
+
+
+   
+     los servicios rest 
+  ----------------------------------------------
+     Aplicaciones WEB normales/tradicionales:
+	-Cada vez que un usuario inicia sesión, el servidor guarda el estado(sesión)y le asigna un ID de sesión único.
+	-Este ID de sesión se guarda en una cookie en el navegador del cliente.
+	- El servidor guarda todos los datos de la sesión del usuario (como el carrito de compras, preferencias, etc.) en RAM o en una base de datos.
+	-Cada vez que el cliente accede a una página nueva, el navegador envía automáticamente la cookie con el ID de sesión al servidor.
+	Esto le permite al servidor recuperar todos los datos de sesión asociados a ese ID y ofrecer al usuario una experiencia personalizada.
+
+ 
+   en aps web tradicionales: cliente <-------------> servidor
+					            genera estado-de-sesion: para cada cliente
+					            se suele almacenar en RAM tiene tabla/coleccion:
+   se almacena en cliente(ID_SESSION_cliente)	   id_sesion_cliente | valores_sesion-> los valores sesion son todo aquello q el cliente ha ido usanso en el servidor  conforme va navegando por la web
+   en una cookie:id_sesion_cliente -> cada vez q 
+   el cliente quiere algo del servidor se guarda en la cookie 
+
+ en servicios REST los clientes no se estan constantemente conectados al servidor, sino que envian solicitudes de forma esporádica o ocasional
+ no tiene sentido almacenar estado de sesion de cada usuario seria ineficiente (xq es eventual ) debido a eso  casinunca
+ para reemplazarlo sugieron JWT donde ahora es el CLIENTE el que almacena su token de sesion de uso
+ del servicio, y cada vez q quiere usarlo se lo tendrá q mandar  JWT-> token en formato JSON 
+
+
+				AJAX(jwt) -> el cliente tiene  q enviar JWT
+		cliente <----------------------------->servicio REST (servidor)
+		- almacena el jwt
+		- mandarlo al servicio el JWT		
+		para endpoints de acceso restringido se mandan en cabecera:
+			Authorization: Bearer ...jwt... 
+
+ cuando el servicio recibe un jwt del cliente, debe comprobar:
+	- si ha sido generado por el (usando clave de firma)
+	- si ha expirado o no (aun en vigencia)
+		hay dos tipos de JWT: 
+
+			- accessTokens <----- jwt de tiempo de expiracion. máximo 15 mins
+						  OJO!!! como se almacena en el navegador del cliente el tiempo debe de ser mínimo
+						  por seguridad (alguien accede al navegador y usa token suplantando identidad)
+						 si el tiempo de expiracion expira(cuando caduca) te tienes q volver a logear o usar refreshToken 
+											
+			- refreshTokens <---- jwt de tiempo de expiracion. de varias horas o dias, en este JWT no van tantos datos como en el 
+						  accessTokens, solo lo mínimo para regenerar un accessToken caducado
+						  (evitas q el usuario se vuelva a logear, recomendable avisar al usuario si quiere hacer uso del mismo o no)
+
+FORMATO DE UN JWT : https://jwt.io
+-----------------
+			
+	esta formado por 3 campos: HEADER . PAYLOAD . SIGNATURE -> se separan por .
+
+		- HEADER: un json con info tiene el tipo de token (jwt), algoritmo q se usa para sacar el hash del jwt 
+		- PAYLOAD o datos: un json formado por campos o propiedades llamados CLAIMS
+						dos tipos de claims:
+							- públicos predefinidos: propiedadess predefinidas como: (los crea por defecto)
+								issuer: nombre del servidor web donde genera el token
+								exp: tiempo en milise de vigencia(expiracion) del token 
+								sub: subject o persona q genera el jwt
+								... 
+							- privados o prefinidos por el server
+
+		- SIGNATURE o firma: usando para comprobar si el jwt ha sido generado o no por un servicio (firma de comprobación)
+		 se usa para comprobar si el JWT ha sido firmado o no por una determinada entidad (iria la firma)
+
+  Cualquier servicio funciona asi .> cuando hagamos el login con el bnoton de google  estas intentando solicitar la
+  autentificacion del usuario usando un servicio externo entonces como usas servicio externo (autentificacion) va a usar JWT
+  lo q tiene q hacer cuando el usuario intente autentificarse (iniciar sesion) con  google la pestaña q sale de correo y contraseña
+  gogle va a enviar un codigo a nuestro servidor( servicio) EL SERVICIO DICE Q CON ESTE COF Q ME MANDO EL USUARIO Q SE identifico
+  contigo (google) dame accesToken y refreshToken  y una vez tenga esos token se lo paso al usuario -> mi app con estos token 
+  tendria acceso a todos los servicios q google tenga auditados para ese usuario acceso a gmail ps a gemail google drive drive .--- funciona todo igual 
+
+  vamos a generar un servicio para generar nuestros propios JWT cuando los clientes autentifiquen en nujestra pag de ebay con el boton continuar
+  tenemos q generar los token de sesion 
+
+
+  en cuentas solo esta la info de la cuenta no el resto de la info del cliente 
+
+
+ forma 1:Primera implementación: Mayor control y claridad sobre los errores específicos de transacción, pero con una estructura más compleja.
+
+  
+miServidorWeb.post('/api/zonaCliente/Registro',async function(req,res,next){//no hace falta poner hhtp:localdpost :3009 xq estoy enell servidsor
+    try {
+        console.log('Datos del registro del ciente de react ...', req.body);//xq body parser los extrae de la solicitd del cliente del reac 
+        //usandi el cliente nos vamos a conmectar par ainsertarlos 
+        let _resultadoInsert =await  clienteMongoDB.db(process.env.DB_MONGODB).collection('cuentas').insertOne(
+                                                                                                                {   ...req.body,
+                                                                                                                    password: bcrypt.hashSync(req.body.password,10),
+                                                                                                                    activada:false
+                                                                                                                });
+        console.log('el valor del INSERT en coleccion cuentas vale...', _resultadoInsert);
+
+        if(_resultadoInsert.insertedId){
+            //cuando me registro en el portal meto en cuentas(el registro) pero tambien en clientes xq me estoy dando de alta en ebay
+            // pq en el moomento q me doy de alta puedo -> vender productos ,comprar,pujar ,subastar dar de alta diorecciones y metodos de pago
+            
+            //imaginate q la BBDD se cae y intentas hacer el 2 insert y no deja entonces hay q hacer una TRANSACCION->
+            //hasta q no se vuelquen(ionserten) los dos insert no das por bueno la operacion para evitar inconsistencia
+            //tarsnsaccion en sql -> ejecucion de varios comando ala vez y hasta q no haces comitt no se vuelcan(guardan) pos aqui igusakl 
+
+              
+            //hacer insert en coleccion "clientes" de objeto nuevo con prop idCuenta el _id de la cuenta insertada
+            clienteMongoDB.db(process.env.DB_MONGODB).collection("clientes").insertOne({
+                listaProductosVender: [],
+                listaProductosComprados: [],
+                listaPujas: [],
+                listaSubastas: [],
+                direcciones: [],//cuando compras productos te lo mandan ahi
+                metodosPago:[],
+                idCuenta: _resultadoInsert.insertedId
+            })
+            //mandar email de activacion de cuenta o sms con codigo de activaciom 
+            res.status(200).send({ codigo:0, mensaje: 'cuenta registrada, FALTA ACTIVACION CUENTA....'});
+            
+
+        }else{
+            //como mando un eroor la ejecucion se interrumpe entonces meterlo en un trycacth siempre cuando operas en una BBDD usar siemopre trycacth
+            throw new Error('error  en insert de datos en coleccion de cuentas Mongodb')
+        }
+
+    } catch (error) {
+        console.log('error en operacion de registro de cuenta ....', error);
+        //siempre mando una respuesta al cliente 
+        res.status(200).send({codigo:1, mensaje: 'fallo en registro, intentalo mas tarde'});
+        //el status 200 xq si no es un status ok no te muestra la pag te muestra un mensaje de errror  como el 404 te muestra un mensaje de alerta y un error y no quieres asustar al usuario y luego muestraas tu el error abajo ern un div ....  si el codigo 0 es q fue bn mas de 0 q fue mak  cuando haga login codigo 2  una esoecue de tabka y apuntarklos para no repetir       
+    }
+
+
+  https://www.mongodb.com/docs/manual/core/transactions/
+
+  
+   
+ 
+ miServidorWeb.post('/api/zonaCliente/Registro',async function(req,res,next){//no hace falta poner hhtp:localdpost :3009 xq estoy enell servidsor
+    try {
+        console.log('Datos del registro del ciente de react ...', req.body);//xq body parser los extrae de la solicitd del cliente del reac 
+        //usandi el cliente nos vamos a conmectar par ainsertarlos 
+        
+        // Conexión a MongoDB para realizar operaciones de inserción usando ls url q has definifo
+        await clienteMongoDB.connect();// Abre una conexión persistente con MongoDB para realizar consultas y modificaciones en la base de datos
+
+        /*USAR TRANSACCIONES!!!! para evitar inconsistencia usar xq si se cae no de fallo  si cae la bbd ej en el 2 insert haria un rollback y te dice q lo intntes de nuevo mas tarde
+        //imaginate q la BBDD se cae y intentas hacer el 2 insert y no deja entonces hay q hacer una TRANSACCION->
+        //hasta q no se vuelquen(ionserten) los dos insert no das por bueno la operacion para evitar inconsistencia
+        //tarsnsaccion -> ejecucion de varios comando ala vez y hasta q no haces comitt no se vuelcan(guardan) pos
+        //aqui igual entonces si falla una haces rollback y es como si no hubieras hecho mimguna 
+        */
+
+        let _sesionTransaccion  = await clienteMongoDB.startSession();// <---------Inicio la transaccion 
+        await _sesionTransaccion.withTransaction(
+            async () => {
+                //aqui dentro todos los comandos  q quiero lanzar en la transaccion 
+                let _resultadoInsert = await clienteMongoDB.db(process.env.DB_MONGODB).collection('cuentas').insertOne(
+                    {   ...req.body,
+                        password: bcrypt.hashSync(req.body.password,10),
+                        activada:false
+                    });
+                console.log('el valor del INSERT en coleccion cuentas vale...', _resultadoInsert);
+             
+                // Si se inserta correctamente, continúa con la inserción en la colección 'clientes'
+                if(_resultadoInsert.insertedId){
+                //cuando me registro en el portal meto en cuentas(el registro) pero tambien en clientes xq me estoy dando de alta en ebay pq en el moomento q me doy de alta puedo -> vender productos ,comprar,pujar ,subastar dar de alta diorecciones y metodos de pago
+
+                //hacer una select para coger el id  pero si se cae  no se inserta entonces meterlo en la transaccion y hasta q no haces commit no lo  mandas ala bdd entonces meterlo abajo xq si haty fallo haxce rollback
+                //let _idcuentaExtraido=await clienteMongoDB.db(process.env.DB_MONGODB).collection('cuentas').findOne({ email: req.body.email },{ _id:1 });
+                //console.log('_id del documento cuentas recien insertado....', _idcuentaExtraido);
+                //no hace falta la query pabuscar el id xq cuabndo haces el insert te lo devuelve aqui 
+
+                //hacer insert en coleccion "clientes" de objeto nuevo con prop idCuenta el _id de la cuenta insertada
+                let _resultadoInsertClientes = await clienteMongoDB.db(process.env.DB_MONGODB).collection('clientes').insertOne({
+                listaProductosVender: [],
+                listaProductosComprados: [],
+                listaPujas: [],
+                listaSubastas: [],
+                direcciones: [],//cuando compras productos te lo mandan ahi
+                metodosPago:[],
+                idCuenta: _resultadoInsert.insertedId //_idcuentaExtraido._id
+                })//meter el id del registro q acabo de meter en idCuenta
+
+                //mandar email de activacion de cuenta o sms con codigo de activaciom 
+                res.status(200).send({ codigo:0, mensaje: 'cuenta registrada, FALTA ACTIVACION CUENTA....'});            
+
+                }else{
+                //como mando un eroor la ejecucion se interrumpe entonces meterlo en un trycacth siempre cuando operas en una BBDD usar siemopre trycacth
+                    throw new Error('error  en insert de datos en coleccion de cuentas Mongodb')
+                }
+            }
+        );
+    } catch (error) {
+        console.log('error en operacion de registro de cuenta ....', error);
+        //siempre mando una respuesta al cliente 
+        res.status(200).send({codigo:1, mensaje: 'fallo en registro, intentalo mas tarde'});
+        //el status 200 xq si no es un status ok no te muestra la pag te muestra un mensaje de errror  como el 404 te muestra un mensaje de alerta y un error y no quieres asustar al usuario y luego muestraas tu el error abajo ern un div ....  si el codigo 0 es q fue bn mas de 0 q fue mak  cuando haga login codigo 2  una esoecue de tabka y apuntarklos para no repetir       
+    }finally{
+        //una trasnaccion x cliente o por conexion 
+        await  _sesionTransaccion.endSession();//<----------- cierre transaccion
+        await clienteMongoDB.close() //<------------- cierre conexion
+    }
+  })
+
+
+  esto esta bn
+
+//en post estan en req.body los datos en get req.params o req.query
+
+ como hubo excepcion y la transaccion se quedo abierta ps te dice q el cluiente tiene una transaccion abuierta xq no ha slatado al finally 
+ entonces un try dentro de otro q eso se haria 
+ 
+
+
+ si quiero interceptar la exccepcion de es5to 
+
+  _sesionTransaccion.withTransaction(
+           
+        );
+
+
+
+  forma pablo mas buena Mayor control y claridad sobre los errores específicos de transacción, pero con una estructura más compleja.
+  
+  miServidorWeb.post('/api/zonaCliente/Registro',async function(req,res,next){//no hace falta poner hhtp:localdpost :3009 xq estoy enell servidsor
+    try {
+        console.log('Datos del registro del ciente de react ...', req.body);//xq body parser los extrae de la solicitd del cliente del reac 
+        await clienteMongoDB.connect();// Conexión a MongoDB para realizar operaciones de inserción usando ls url q has definifo
+        //#region USAR TRANSACCIONES!!!! para evitar inconsistencia usar xq si se cae no de fallo  si cae la bbd ej en el 2 insert haria un rollback y te dice q lo intntes de nuevo mas tarde
+        //imaginate q la BBDD se cae y intentas hacer el 2 insert y no deja entonces hay q hacer una TRANSACCION->
+        //hasta q no se vuelquen(ionserten) los dos insert no das por bueno la operacion para evitar inconsistencia
+        //tarsnsaccion -> ejecucion de varios comando ala vez y hasta q no haces comitt no se vuelcan(guardan) pos
+        //aqui igual entonces si falla una haces rollback y es como si no hubieras hecho mimguna 
+        //#endregion
+        let _sesionTransaccion = clienteMongoDB.startSession();// <---------Inicio la transaccion 
+        try {
+            await _sesionTransaccion.withTransaction( //await xq sino seguiria cprriendo el codigo
+                async () => {
+                    //aqui dentro todos los comandos  q quiero lanzar en la transaccion 
+                    let _resultadoInsert = await clienteMongoDB.db(process.env.DB_MONGODB).collection('cuentas').insertOne(
+                        {   ...req.body,
+                            password: bcrypt.hashSync(req.body.password,10),
+                            activada:false
+                        });
+                    console.log('el valor del INSERT en coleccion cuentas vale...', _resultadoInsert);
+                 
+                    // Si se inserta correctamente, continúa con la inserción en la colección 'clientes'
+                    if(_resultadoInsert.insertedId){
+                    //cuando me registro en el portal meto en cuentas(el registro) pero tambien en clientes xq me estoy dando de alta en ebay pq en el moomento q me doy de alta puedo -> vender productos ,comprar,pujar ,subastar dar de alta diorecciones y metodos de pago
+    
+                    //hacer una select para coger el id  pero si se cae  no se inserta entonces meterlo en la transaccion y hasta q no haces commit no lo  mandas ala bdd entonces meterlo abajo xq si haty fallo haxce rollback
+                    //let _idcuentaExtraido=await clienteMongoDB.db(process.env.DB_MONGODB).collection('cuentas').findOne({ email: req.body.email },{ _id:1 });
+                    //console.log('_id del documento cuentas recien insertado....', _idcuentaExtraido);
+                    //no hace falta la query pabuscar el id xq cuabndo haces el insert te lo devuelve aqui 
+    
+                    //hacer insert en coleccion "clientes" de objeto nuevo con prop idCuenta el _id de la cuenta insertada
+                    let _resultadoInsertClientes = await clienteMongoDB.db(process.env.DB_MONGODB).collection('clientes').insertOne({
+                    listaProductosVender: [],
+                    listaProductosComprados: [],
+                    listaPujas: [],
+                    listaSubastas: [],
+                    direcciones: [],//cuando compras productos te lo mandan ahi
+                    metodosPago:[],
+                    idCuenta: _resultadoInsert.insertedId //_idcuentaExtraido._id
+                    })//meter el id del registro q acabo de meter en idCuenta
+    
+                    //mandar email de activacion de cuenta o sms con codigo de activaciom 
+                    res.status(200).send({ codigo:0, mensaje: 'cuenta registrada, FALTA ACTIVACION CUENTA....'});            
+    
+                    }else{
+                    //como mando un eroor la ejecucion se interrumpe entonces meterlo en un trycacth siempre cuando operas en una BBDD usar siemopre trycacth
+                        throw new Error('error  en insert de datos en coleccion de cuentas Mongodb')
+                    }
+                }
+            );
+        } catch (error) {
+            console.log('error en transaccion contra mongodb al insertar cliente y cuenta...', error);
+            throw new Error(error.message);
+        }finally{
+            await _sesionTransaccion.endSession();//<----------- cierre transaccion
+        }
+        
+    } catch (error) {
+        console.log('error en operacion de registro de cuenta ....', error);
+        //siempre mando una respuesta al cliente 
+        res.status(200).send({codigo:1, mensaje: 'fallo en registro, intentalo mas tarde'});
+        //el status 200 xq si no es un status ok no te muestra la pag te muestra un mensaje de errror  como el 404 te muestra un mensaje de alerta y un error y no quieres asustar al usuario y luego muestraas tu el error abajo ern un div ....  si el codigo 0 es q fue bn mas de 0 q fue mak  cuando haga login codigo 2  una esoecue de tabka y apuntarklos para no repetir       
+    }finally{
+        await clienteMongoDB.close() //<------------- cierre conexion
+    }
+  })
+
+
+

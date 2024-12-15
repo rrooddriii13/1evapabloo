@@ -1,0 +1,68 @@
+   
+   CREAR CLAVE RESTRINGIDA ->https://dashboard.stripe.com/test/apikeys
+
+
+ CUANDO QUIERES ACEDER COD PURO DEL NAVEGADOR A DE JS O REACT  ala api de stripe  usarias la clvae publica
+
+
+ 
+ como nosotros accedemeos desde node (serviudor) necesitariamos una clave secreta o bn una clave restringuida 
+
+
+  le das a xcraer clave restringida
+
+   craer tu propia integracion  -> le das a continuar
+  
+ poones el nombre de la clsve -_> ebay_nodejs
+   
+
+
+ habilitar  todos los recursos fundamentakles a escritura xq quiero todo esto a escritura
+ 
+
+ habilitar todos los recursos de checkoit -<z a escritura
+ 
+ recursos de billing-> es para crear cargos -> habilitar a escruitura
+
+ habiliatr todos los recursos de connect a escritura
+
+ habiliatr todos los recursos de Ordenes a escritura
+
+  habiliatr todos los recursos de Issuing a escritura
+
+
+  le das a crear cklace
+
+
+  revelar clave 
+ 
+
+ y la`piones en el .env 
+
+ rk_test_51QFgCHA8uI3kpm3SPAfvLeblkY6Mg4DkSnJcVaRUwdwO5rezSUwojPOiDJ6GFaRhQNRNFSezzTFZd9BErCq31mHy00L3uXKLze
+
+
+  xq como lo hacemos en el lado del sevidor ps tiene q ser esgt a
+
+
+
+  api de stripe cpmp crear un obj customs
+
+  https://docs.stripe.com/api/customers/create 
+ç
+
+   con axios no se pasa como json  se àsa como si fuera un form,ulario 
+
+
+
+  como mandar datos con axios 
+  te creas el obj js  lo mnadas se lo enchufas al axios y le pones el Content-Type:application /json
+
+  y zumbando
+
+  y sino claro si tienens unformulario cuando haces el subtmit el directamente te crea ese formato 
+  https://axios-http.com/docs/urlencoded
+
+ ps mira dice tienenes dos formas -> voy por el minuto 12:30 pablo 21 -1
+
+
