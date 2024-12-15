@@ -1,0 +1,8 @@
+ul {
+    list-style-type:  none;
+}
+
+li {
+    display: list-item;
+    font-size: 14px;
+}
